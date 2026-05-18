@@ -167,6 +167,10 @@ export default function OnboardingWizard() {
       .eq('id', state.contextId)
     if (error) throw new Error(error.message)
 
+    // Persiste company_id para as demais páginas do app
+    if (state.companyId) {
+      localStorage.setItem('socialmind_company_id', state.companyId)
+    }
     localStorage.removeItem(STORAGE_KEY)
     setCompleted(true)
   })
