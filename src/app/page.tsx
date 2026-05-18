@@ -1,7 +1,16 @@
-import { redirect } from 'next/navigation'
+import AppShell from '@/components/layout/AppShell'
+import DashboardPage from '@/components/dashboard/DashboardPage'
+
+export const dynamic = 'force-dynamic'
+
+export const metadata = {
+  title: 'Dashboard — SocialMind',
+}
 
 export default function Home() {
-  // Client-side redirect handled by middleware or layout
-  // Default: go to scheduling (AppShell redirects to onboarding if no company_id)
-  redirect('/scheduling')
+  return (
+    <AppShell>
+      <DashboardPage />
+    </AppShell>
+  )
 }
