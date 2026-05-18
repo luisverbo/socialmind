@@ -5,9 +5,9 @@ import type { StepProps } from '@/types/onboarding'
 import { Building2, Mail, Phone, Sparkles } from 'lucide-react'
 
 const PLAN_OPTIONS = [
-  { value: 'starter', label: 'Starter', posts: '12 posts/mês', price: 'Grátis para começar', color: 'indigo' },
-  { value: 'pro',     label: 'Pro',     posts: '30 posts/mês', price: 'Mais popular',       color: 'purple' },
-  { value: 'agency',  label: 'Agency',  posts: '90 posts/mês', price: 'Para agências',      color: 'pink' },
+  { value: 'starter', label: 'Starter', posts: '12 posts/mês', price: 'Grátis para começar' },
+  { value: 'pro',     label: 'Pro',     posts: '30 posts/mês', price: 'Mais popular' },
+  { value: 'agency',  label: 'Agency',  posts: '90 posts/mês', price: 'Para agências' },
 ] as const
 
 interface FieldError { [key: string]: string }
@@ -39,17 +39,17 @@ export default function Step1Business({ state, updateState, onNext, loading }: S
     opts?: { textarea?: boolean; required?: boolean; hint?: string }
   ) => (
     <div>
-      <label className="block text-sm font-medium text-gray-300 mb-1.5">
-        {label} {opts?.required !== false && <span className="text-indigo-400">*</span>}
+      <label className="form-label">
+        {label} {opts?.required !== false && <span className="text-[#6C3FE8]">*</span>}
       </label>
-      {opts?.hint && <p className="text-xs text-gray-500 mb-2">{opts.hint}</p>}
+      {opts?.hint && <p className="form-hint">{opts.hint}</p>}
       {opts?.textarea ? (
         <textarea
           value={state[key] as string}
           onChange={e => updateState({ [key]: e.target.value })}
           placeholder={placeholder}
           rows={3}
-          className={`w-full bg-gray-800 border rounded-xl px-4 py-3 text-gray-100 placeholder-gray-600 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all ${errors[key] ? 'border-red-500' : 'border-gray-700 focus:border-indigo-500'}`}
+          className={`textarea-field ${errors[key] ? 'border-red-400' : ''}`}
         />
       ) : (
         <input
@@ -57,10 +57,10 @@ export default function Step1Business({ state, updateState, onNext, loading }: S
           value={state[key] as string}
           onChange={e => updateState({ [key]: e.target.value })}
           placeholder={placeholder}
-          className={`w-full bg-gray-800 border rounded-xl px-4 py-3 text-gray-100 placeholder-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all ${errors[key] ? 'border-red-500' : 'border-gray-700 focus:border-indigo-500'}`}
+          className={`input-field ${errors[key] ? 'border-red-400' : ''}`}
         />
       )}
-      {errors[key] && <p className="text-red-400 text-xs mt-1">{errors[key]}</p>}
+      {errors[key] && <p className="form-error">{errors[key]}</p>}
     </div>
   )
 
@@ -68,71 +68,65 @@ export default function Step1Business({ state, updateState, onNext, loading }: S
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2 text-indigo-400 text-sm font-medium mb-2">
+        <div className="flex items-center gap-2 text-[#6C3FE8] text-sm font-medium mb-2">
           <Building2 size={16} />
           <span>Etapa 1 de 5</span>
         </div>
-        <h1 className="text-2xl font-bold text-white">Sobre o seu negócio</h1>
+        <h1 className="text-2xl font-bold text-[#1A1A2E]">Sobre o seu negócio</h1>
         <p className="text-gray-400 text-sm mt-1">Vamos conhecer sua empresa para personalizar tudo.</p>
       </div>
 
       {/* Conta */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Dados da conta</h2>
+      <div className="card p-6 space-y-4">
+        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Dados da conta</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">
-              Nome da empresa <span className="text-indigo-400">*</span>
-            </label>
+            <label className="form-label">Nome da empresa <span className="text-[#6C3FE8]">*</span></label>
             <div className="relative">
-              <Building2 size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+              <Building2 size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 value={state.name}
                 onChange={e => updateState({ name: e.target.value })}
                 placeholder="Minha Empresa Ltda."
-                className={`w-full bg-gray-800 border rounded-xl pl-9 pr-4 py-3 text-gray-100 placeholder-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all ${errors.name ? 'border-red-500' : 'border-gray-700 focus:border-indigo-500'}`}
+                className={`input-field pl-9 ${errors.name ? 'border-red-400' : ''}`}
               />
             </div>
-            {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
+            {errors.name && <p className="form-error">{errors.name}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">
-              Telefone / WhatsApp
-            </label>
+            <label className="form-label">Telefone / WhatsApp</label>
             <div className="relative">
-              <Phone size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+              <Phone size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 value={state.phone}
                 onChange={e => updateState({ phone: e.target.value })}
                 placeholder="(11) 99999-9999"
-                className="w-full bg-gray-800 border border-gray-700 rounded-xl pl-9 pr-4 py-3 text-gray-100 placeholder-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                className="input-field pl-9"
               />
             </div>
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1.5">
-            E-mail <span className="text-indigo-400">*</span>
-          </label>
+          <label className="form-label">E-mail <span className="text-[#6C3FE8]">*</span></label>
           <div className="relative">
-            <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="email"
               value={state.email}
               onChange={e => updateState({ email: e.target.value })}
               placeholder="contato@minhaempresa.com"
-              className={`w-full bg-gray-800 border rounded-xl pl-9 pr-4 py-3 text-gray-100 placeholder-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all ${errors.email ? 'border-red-500' : 'border-gray-700 focus:border-indigo-500'}`}
+              className={`input-field pl-9 ${errors.email ? 'border-red-400' : ''}`}
             />
           </div>
-          {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
+          {errors.email && <p className="form-error">{errors.email}</p>}
         </div>
       </div>
 
       {/* Plano */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-3">
-        <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Plano</h2>
+      <div className="card p-6 space-y-3">
+        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Plano</h2>
         <div className="grid grid-cols-3 gap-3">
           {PLAN_OPTIONS.map(plan => (
             <button
@@ -141,28 +135,28 @@ export default function Step1Business({ state, updateState, onNext, loading }: S
               onClick={() => updateState({ plan: plan.value })}
               className={`relative p-4 rounded-xl border text-left transition-all ${
                 state.plan === plan.value
-                  ? 'bg-indigo-600/20 border-indigo-500 shadow-lg shadow-indigo-500/10'
-                  : 'bg-gray-800/50 border-gray-700 hover:border-gray-600'
+                  ? 'bg-[#F8F7FF] border-[#6C3FE8] shadow-brand-sm'
+                  : 'bg-white border-gray-200 hover:border-gray-300'
               }`}
             >
               {plan.value === 'pro' && (
-                <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">Popular</span>
+                <span className="absolute -top-2 left-1/2 -translate-x-1/2 gradient-bg text-white text-xs px-2 py-0.5 rounded-full font-medium">Popular</span>
               )}
-              <p className={`font-bold text-sm ${state.plan === plan.value ? 'text-indigo-300' : 'text-gray-200'}`}>{plan.label}</p>
+              <p className={`font-bold text-sm ${state.plan === plan.value ? 'text-[#6C3FE8]' : 'text-[#1A1A2E]'}`}>{plan.label}</p>
               <p className="text-xs text-gray-400 mt-0.5">{plan.posts}</p>
-              <p className="text-xs text-gray-500 mt-1">{plan.price}</p>
+              <p className="text-xs text-gray-300 mt-1">{plan.price}</p>
             </button>
           ))}
         </div>
       </div>
 
       {/* Sobre o negócio */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
+      <div className="card p-6 space-y-4">
         <div className="flex items-center gap-2">
-          <Sparkles size={16} className="text-indigo-400" />
-          <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Sobre o negócio</h2>
+          <Sparkles size={16} className="text-[#6C3FE8]" />
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Sobre o negócio</h2>
         </div>
-        <p className="text-xs text-gray-500">Essas informações serão usadas pela IA para criar conteúdos personalizados.</p>
+        <p className="text-xs text-gray-400">Essas informações serão usadas pela IA para criar conteúdos personalizados.</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {field('Nome do negócio / marca', 'businessName', 'ex: Studio Beleza da Ana')}
@@ -177,19 +171,11 @@ export default function Step1Business({ state, updateState, onNext, loading }: S
       <button
         onClick={handleNext}
         disabled={loading}
-        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-60 text-white font-semibold py-4 rounded-xl transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2"
+        className="btn-primary w-full py-4"
       >
         {loading ? (
-          <>
-            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-            </svg>
-            Salvando...
-          </>
-        ) : (
-          <>Próxima etapa →</>
-        )}
+          <><div className="w-4 h-4 spinner" /> Salvando...</>
+        ) : 'Próxima etapa →'}
       </button>
     </div>
   )

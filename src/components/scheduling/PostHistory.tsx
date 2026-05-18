@@ -51,13 +51,13 @@ export default function PostHistory({ companyId }: { companyId: string }) {
   return (
     <div>
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 mb-5 bg-gray-900 border border-gray-800 rounded-2xl p-4">
+      <div className="card p-4 flex flex-wrap gap-3 mb-5">
         <div className="flex-1 min-w-0">
-          <label className="block text-xs text-gray-500 mb-1">Status</label>
+          <label className="block text-xs text-gray-400 mb-1">Status</label>
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+            className="select-field"
           >
             {STATUS_FILTER_OPTIONS.map(o => (
               <option key={o.value} value={o.value}>{o.label}</option>
@@ -65,28 +65,28 @@ export default function PostHistory({ companyId }: { companyId: string }) {
           </select>
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">De</label>
+          <label className="block text-xs text-gray-400 mb-1">De</label>
           <input
             type="date"
             value={dateFrom}
             onChange={e => setDateFrom(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+            className="input-field"
           />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Até</label>
+          <label className="block text-xs text-gray-400 mb-1">Até</label>
           <input
             type="date"
             value={dateTo}
             onChange={e => setDateTo(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+            className="input-field"
           />
         </div>
         {(statusFilter || dateFrom || dateTo) && (
           <div className="flex items-end">
             <button
               onClick={() => { setStatusFilter(''); setDateFrom(''); setDateTo('') }}
-              className="px-3 py-2 text-xs text-gray-500 hover:text-gray-300 bg-gray-800 border border-gray-700 rounded-xl transition-all"
+              className="btn-secondary px-3 py-2 text-xs rounded-xl"
             >
               Limpar
             </button>
@@ -95,18 +95,17 @@ export default function PostHistory({ companyId }: { companyId: string }) {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20 text-gray-400">
-          <svg className="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-          </svg>
+        <div className="flex items-center justify-center py-20 text-gray-400 gap-2">
+          <div className="w-5 h-5 spinner" />
           Carregando...
         </div>
       ) : posts.length === 0 ? (
-        <div className="text-center py-20 text-gray-600">
-          <History size={40} className="mx-auto mb-3 opacity-40" />
-          <p className="font-medium text-gray-500">Nenhum post encontrado</p>
-          <p className="text-sm mt-1">Os posts publicados aparecerão aqui.</p>
+        <div className="text-center py-20">
+          <div className="w-14 h-14 bg-[#F8F7FF] rounded-2xl flex items-center justify-center mx-auto mb-3 border border-[#6C3FE8]/15">
+            <History size={26} className="text-[#6C3FE8]/60" />
+          </div>
+          <p className="font-medium text-gray-600">Nenhum post encontrado</p>
+          <p className="text-sm text-gray-400 mt-1">Os posts publicados aparecerão aqui.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -116,20 +115,20 @@ export default function PostHistory({ companyId }: { companyId: string }) {
             const theme = schedule?.content_themes
 
             return (
-              <div key={post.id} className="bg-gray-900 border border-gray-800 rounded-2xl px-5 py-4 flex items-center gap-4">
+              <div key={post.id} className="card px-5 py-4 flex items-center gap-4">
                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium text-gray-200 truncate">
+                    <span className="text-sm font-medium text-[#1A1A2E] truncate">
                       {theme?.theme_name ?? 'Post sem tema'}
                     </span>
                     <span className={`text-xs px-2 py-0.5 rounded-md border ${cfg.badge}`}>
                       {cfg.label}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">{formatDate(post.scheduled_for)}</p>
+                  <p className="text-xs text-gray-400 mt-1">{formatDate(post.scheduled_for)}</p>
                   {post.published_at && (
-                    <p className="text-xs text-green-500 mt-0.5">
+                    <p className="text-xs text-green-600 mt-0.5">
                       Publicado em {formatDate(post.published_at)}
                     </p>
                   )}
@@ -139,7 +138,7 @@ export default function PostHistory({ companyId }: { companyId: string }) {
                     href={`https://www.instagram.com/p/${post.instagram_post_id}/`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 transition-colors flex-shrink-0"
+                    className="flex items-center gap-1.5 text-xs text-[#6C3FE8] hover:text-[#5830cc] transition-colors flex-shrink-0"
                   >
                     Ver no Instagram <ExternalLink size={12} />
                   </a>

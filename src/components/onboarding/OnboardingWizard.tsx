@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { Zap } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { OnboardingState } from '@/types/onboarding'
 import Step1Business from './steps/Step1Business'
@@ -29,7 +30,7 @@ const DEFAULT_STATE: OnboardingState = {
   toneOfVoice: '',
   forbiddenWords: '',
   postExamples: '',
-  brandColors: { primary: '#6366f1', secondary: '#8b5cf6', accent: '#ec4899' },
+  brandColors: { primary: '#6C3FE8', secondary: '#E84393', accent: '#A855F7' },
   logoUrl: '',
   slideStyle: 'moderno',
   themes: [],
@@ -160,14 +161,12 @@ export default function OnboardingWizard() {
       if (error) throw new Error(error.message)
     }
 
-    // Força regeneração do system_prompt pelo trigger
     const { error } = await supabase
       .from('company_context')
       .update({ system_prompt: null })
       .eq('id', state.contextId)
     if (error) throw new Error(error.message)
 
-    // Persiste company_id para as demais páginas do app
     if (state.companyId) {
       localStorage.setItem('socialmind_company_id', state.companyId)
     }
@@ -180,17 +179,17 @@ export default function OnboardingWizard() {
   const progress = ((state.currentStep - 1) / (STEPS.length - 1)) * 100
 
   return (
-    <div className="min-h-screen bg-gray-950 flex">
+    <div className="min-h-screen bg-[#F8F7FF] flex">
       {/* Sidebar */}
-      <aside className="hidden lg:flex flex-col w-72 bg-gray-900 border-r border-gray-800 p-8 fixed h-full">
+      <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-gray-200 p-8 fixed h-full">
         <div className="mb-10">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-              <span className="text-white font-black text-sm">S</span>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl gradient-bg flex items-center justify-center shadow-brand-sm">
+              <Zap size={18} className="text-white" strokeWidth={2.5} />
             </div>
             <div>
-              <p className="text-white font-bold text-base leading-tight">SocialMind</p>
-              <p className="text-indigo-400 text-xs">Configuração inicial</p>
+              <p className="font-bold text-base text-gradient leading-tight">SocialMind</p>
+              <p className="text-[#6C3FE8]/60 text-xs">Configuração inicial</p>
             </div>
           </div>
         </div>
@@ -206,42 +205,39 @@ export default function OnboardingWizard() {
                 disabled={!isDone && !isCurrent}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${
                   isCurrent
-                    ? 'bg-indigo-600/20 border border-indigo-500/40'
+                    ? 'bg-[#F8F7FF] border border-[#6C3FE8]/15'
                     : isDone
-                    ? 'hover:bg-gray-800/60 cursor-pointer'
+                    ? 'hover:bg-gray-50 cursor-pointer'
                     : 'opacity-40 cursor-default'
                 }`}
               >
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all ${
                   isCurrent
-                    ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/40'
+                    ? 'gradient-bg text-white shadow-brand-sm'
                     : isDone
                     ? 'bg-green-500 text-white'
-                    : 'bg-gray-700 text-gray-500'
+                    : 'bg-gray-100 text-gray-400'
                 }`}>
                   {isDone ? '✓' : step.number}
                 </div>
                 <div>
-                  <p className={`text-sm font-medium ${isCurrent ? 'text-indigo-300' : isDone ? 'text-gray-200' : 'text-gray-500'}`}>
+                  <p className={`text-sm font-medium ${isCurrent ? 'text-[#6C3FE8]' : isDone ? 'text-[#1A1A2E]' : 'text-gray-400'}`}>
                     {step.title}
                   </p>
-                  <p className="text-xs text-gray-500">{step.description}</p>
+                  <p className="text-xs text-gray-400">{step.description}</p>
                 </div>
               </button>
             )
           })}
         </nav>
 
-        <div className="mt-auto pt-6 border-t border-gray-800">
-          <div className="flex justify-between text-xs text-gray-500 mb-2">
+        <div className="mt-auto pt-6 border-t border-gray-100">
+          <div className="flex justify-between text-xs text-gray-400 mb-2">
             <span>Progresso</span>
             <span>{Math.round(progress)}%</span>
           </div>
-          <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-700"
-              style={{ width: `${progress}%` }}
-            />
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="progress-bar" style={{ width: `${progress}%` }} />
           </div>
         </div>
       </aside>
@@ -249,27 +245,24 @@ export default function OnboardingWizard() {
       {/* Main */}
       <main className="flex-1 lg:ml-72 flex flex-col min-h-screen">
         {/* Mobile top bar */}
-        <div className="lg:hidden sticky top-0 z-10 bg-gray-900/95 backdrop-blur border-b border-gray-800 px-4 py-3">
+        <div className="lg:hidden sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-gray-200 px-4 py-3">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                <span className="text-white font-black text-xs">S</span>
+              <div className="w-7 h-7 rounded-lg gradient-bg flex items-center justify-center">
+                <Zap size={14} className="text-white" strokeWidth={2.5} />
               </div>
-              <span className="text-white font-bold text-sm">SocialMind</span>
+              <span className="font-bold text-sm text-gradient">SocialMind</span>
             </div>
             <span className="text-gray-400 text-xs">Etapa {state.currentStep} de {STEPS.length}</span>
           </div>
-          <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-700"
-              style={{ width: `${progress}%` }}
-            />
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="progress-bar" style={{ width: `${progress}%` }} />
           </div>
           <div className="flex justify-between mt-2">
             {STEPS.map(s => (
               <span key={s.number} className={`text-xs font-medium ${
-                state.currentStep === s.number ? 'text-indigo-400' :
-                state.currentStep > s.number ? 'text-green-500' : 'text-gray-600'
+                state.currentStep === s.number ? 'text-[#6C3FE8]' :
+                state.currentStep > s.number ? 'text-green-500' : 'text-gray-300'
               }`}>{s.number}</span>
             ))}
           </div>
@@ -278,7 +271,7 @@ export default function OnboardingWizard() {
         <div className="flex-1 flex items-start justify-center py-8 px-4 sm:px-6">
           <div className="w-full max-w-2xl">
             {error && (
-              <div className="mb-4 p-4 bg-red-900/30 border border-red-700/50 rounded-xl text-red-300 text-sm flex items-center gap-2">
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-center gap-2">
                 <span>⚠️</span> {error}
               </div>
             )}

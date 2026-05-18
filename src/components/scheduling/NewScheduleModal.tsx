@@ -62,7 +62,6 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
     if (!validate()) return
     setLoading(true)
     try {
-      // Check for time conflict
       const conflictQuery = supabase
         .from('post_schedules')
         .select('id')
@@ -83,7 +82,6 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
         return
       }
 
-      // Create schedule
       const schedulePayload: Record<string, unknown> = {
         company_id: companyId,
         theme_id: themeId || null,
@@ -106,7 +104,6 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
         .single()
       if (schedErr) throw new Error(schedErr.message)
 
-      // Generate posts
       if (type === 'recurring') {
         const dates = getNextOccurrences(dayOfWeek, scheduledTime, 4)
         if (dates.length > 0) {
@@ -145,26 +142,26 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full sm:max-w-lg bg-gray-900 border border-gray-800 rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[92vh] overflow-y-auto">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full sm:max-w-lg bg-white border border-gray-200 rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[92vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center justify-between z-10">
-          <h2 className="text-lg font-bold text-white">Novo agendamento</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-gray-200 transition-all">
+        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between z-10">
+          <h2 className="text-lg font-bold text-[#1A1A2E]">Novo agendamento</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-all">
             <X size={18} />
           </button>
         </div>
 
         <div className="p-6 space-y-5">
           {errors.global && (
-            <div className="flex items-center gap-2 p-3 bg-red-900/30 border border-red-700/50 rounded-xl text-red-300 text-sm">
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
               <AlertCircle size={16} /> {errors.global}
             </div>
           )}
 
           {/* Tipo */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Tipo de agendamento</label>
+            <label className="form-label">Tipo de agendamento</label>
             <div className="grid grid-cols-2 gap-2">
               {(['recurring', 'one_time'] as const).map(t => (
                 <button
@@ -173,8 +170,8 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
                   onClick={() => setType(t)}
                   className={`p-3 rounded-xl border text-sm font-medium transition-all text-left ${
                     type === t
-                      ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300'
-                      : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
+                      ? 'bg-[#F8F7FF] border-[#6C3FE8] text-[#6C3FE8]'
+                      : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
                   }`}
                 >
                   <div className="font-semibold">{t === 'recurring' ? '🔁 Recorrente' : '📅 Pontual'}</div>
@@ -187,11 +184,11 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
           {/* Dia / Data */}
           {type === 'recurring' ? (
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Dia da semana</label>
+              <label className="form-label">Dia da semana</label>
               <select
                 value={dayOfWeek}
                 onChange={e => setDayOfWeek(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500"
+                className="select-field"
               >
                 {DAY_OF_WEEK_OPTIONS.map(d => (
                   <option key={d.value} value={d.value}>{d.label}</option>
@@ -200,41 +197,37 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
             </div>
           ) : (
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Data <span className="text-indigo-400">*</span>
-              </label>
+              <label className="form-label">Data <span className="text-[#6C3FE8]">*</span></label>
               <input
                 type="date"
                 value={scheduledDate}
                 min={new Date().toISOString().split('T')[0]}
                 onChange={e => setScheduledDate(e.target.value)}
-                className={`w-full bg-gray-800 border rounded-xl px-4 py-3 text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all ${errors.scheduledDate ? 'border-red-500' : 'border-gray-700 focus:border-indigo-500'}`}
+                className={`input-field ${errors.scheduledDate ? 'border-red-400' : ''}`}
               />
-              {errors.scheduledDate && <p className="text-red-400 text-xs mt-1">{errors.scheduledDate}</p>}
+              {errors.scheduledDate && <p className="form-error">{errors.scheduledDate}</p>}
             </div>
           )}
 
           {/* Horário */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Horário <span className="text-indigo-400">*</span>
-            </label>
+            <label className="form-label">Horário <span className="text-[#6C3FE8]">*</span></label>
             <input
               type="time"
               value={scheduledTime}
               onChange={e => setScheduledTime(e.target.value)}
-              className={`w-full bg-gray-800 border rounded-xl px-4 py-3 text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all ${errors.scheduledTime ? 'border-red-500' : 'border-gray-700 focus:border-indigo-500'}`}
+              className={`input-field ${errors.scheduledTime ? 'border-red-400' : ''}`}
             />
-            {errors.scheduledTime && <p className="text-red-400 text-xs mt-1">{errors.scheduledTime}</p>}
+            {errors.scheduledTime && <p className="form-error">{errors.scheduledTime}</p>}
           </div>
 
           {/* Tema */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Tema do post</label>
+            <label className="form-label">Tema do post</label>
             <select
               value={themeId}
               onChange={e => setThemeId(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500"
+              className="select-field"
             >
               <option value="">Sem tema específico</option>
               {themes.map(t => (
@@ -242,13 +235,13 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
               ))}
             </select>
             {themes.length === 0 && (
-              <p className="text-gray-600 text-xs mt-1">Nenhum tema cadastrado. Configure temas no onboarding.</p>
+              <p className="form-hint">Nenhum tema cadastrado. Configure temas no onboarding.</p>
             )}
           </div>
 
           {/* Modo de publicação */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Modo de publicação</label>
+            <label className="form-label">Modo de publicação</label>
             <div className="grid grid-cols-2 gap-2">
               {([
                 { value: 'review',    label: '👁️ Revisão',    desc: 'Aguarda aprovação' },
@@ -260,8 +253,8 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
                   onClick={() => setPublishMode(opt.value)}
                   className={`p-3 rounded-xl border text-left text-sm transition-all ${
                     publishMode === opt.value
-                      ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300'
-                      : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
+                      ? 'bg-[#F8F7FF] border-[#6C3FE8] text-[#6C3FE8]'
+                      : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
                   }`}
                 >
                   <div className="font-semibold">{opt.label}</div>
@@ -273,7 +266,7 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
 
           {/* Slides */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Quantidade de slides</label>
+            <label className="form-label">Quantidade de slides</label>
             <div className="flex gap-2">
               {SLIDES_OPTIONS.map(n => (
                 <button
@@ -282,8 +275,8 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
                   onClick={() => setSlidesCount(n)}
                   className={`flex-1 py-3 rounded-xl border text-sm font-bold transition-all ${
                     slidesCount === n
-                      ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300'
-                      : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
+                      ? 'bg-[#F8F7FF] border-[#6C3FE8] text-[#6C3FE8]'
+                      : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
                   }`}
                 >
                   {n}
@@ -292,14 +285,14 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
             </div>
           </div>
 
-          {/* Preview dos posts que serão criados */}
+          {/* Preview */}
           {type === 'recurring' && scheduledTime && (
-            <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
-              <p className="text-xs text-gray-400 font-medium mb-2">Posts que serão criados (próximas 4 semanas):</p>
+            <div className="bg-[#F8F7FF] border border-[#6C3FE8]/15 rounded-xl p-4">
+              <p className="text-xs text-[#6C3FE8] font-medium mb-2">Posts que serão criados (próximas 4 semanas):</p>
               <div className="space-y-1">
                 {getNextOccurrences(dayOfWeek, scheduledTime, 4).map((d, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs text-gray-500">
-                    <div className="w-1 h-1 rounded-full bg-gray-600" />
+                    <div className="w-1 h-1 rounded-full bg-[#6C3FE8]/40" />
                     {d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'short' })} às {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 ))}
@@ -310,16 +303,10 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-60 text-white font-semibold py-4 rounded-xl transition-all flex items-center justify-center gap-2"
+            className="btn-primary w-full py-4"
           >
             {loading ? (
-              <>
-                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                </svg>
-                Criando...
-              </>
+              <><div className="w-4 h-4 spinner" /> Criando...</>
             ) : 'Criar agendamento'}
           </button>
         </div>

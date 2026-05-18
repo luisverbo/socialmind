@@ -83,20 +83,19 @@ export default function ApprovalQueue({ companyId, onCountChange }: Props) {
   }
 
   if (loading) return (
-    <div className="flex items-center justify-center py-20 text-gray-400">
-      <svg className="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-      </svg>
+    <div className="flex items-center justify-center py-20 text-gray-400 gap-2">
+      <div className="w-5 h-5 spinner" />
       Carregando...
     </div>
   )
 
   if (posts.length === 0) return (
-    <div className="text-center py-20 text-gray-600">
-      <CheckSquare size={40} className="mx-auto mb-3 opacity-40" />
-      <p className="font-medium text-gray-500">Nenhum post aguardando aprovação</p>
-      <p className="text-sm mt-1">Quando posts forem gerados pela IA, eles aparecerão aqui.</p>
+    <div className="text-center py-20">
+      <div className="w-14 h-14 bg-[#F8F7FF] rounded-2xl flex items-center justify-center mx-auto mb-3 border border-[#6C3FE8]/15">
+        <CheckSquare size={26} className="text-[#6C3FE8]/60" />
+      </div>
+      <p className="font-medium text-gray-600">Nenhum post aguardando aprovação</p>
+      <p className="text-sm text-gray-400 mt-1">Quando posts forem gerados pela IA, eles aparecerão aqui.</p>
     </div>
   )
 
@@ -107,7 +106,7 @@ export default function ApprovalQueue({ companyId, onCountChange }: Props) {
         <button
           onClick={approveAll}
           disabled={processing === 'all'}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-500 disabled:opacity-60 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+          className="flex items-center gap-2 bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all"
         >
           <CheckSquare size={15} />
           Aprovar todos
@@ -121,31 +120,31 @@ export default function ApprovalQueue({ companyId, onCountChange }: Props) {
           const isProcessing = processing === post.id
 
           return (
-            <div key={post.id} className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+            <div key={post.id} className="card overflow-hidden">
               {/* Post header */}
-              <div className="flex items-start justify-between px-5 py-4 border-b border-gray-800">
+              <div className="flex items-start justify-between px-5 py-4 border-b border-gray-100">
                 <div>
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-amber-500" />
-                    <span className="text-sm font-semibold text-white">
+                    <div className="w-2 h-2 rounded-full bg-amber-400" />
+                    <span className="text-sm font-semibold text-[#1A1A2E]">
                       {theme?.theme_name ?? 'Post sem tema'}
                     </span>
                     {theme?.tone && (
-                      <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-md border border-gray-700">
+                      <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md border border-gray-200">
                         {TONE_LABEL[theme.tone] ?? theme.tone}
                       </span>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 mt-1">
-                    <Clock size={12} className="text-gray-500" />
-                    <span className="text-xs text-gray-500">{formatDate(post.scheduled_for)}</span>
+                    <Clock size={12} className="text-gray-400" />
+                    <span className="text-xs text-gray-400">{formatDate(post.scheduled_for)}</span>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => startEdit(post)}
                     disabled={isProcessing}
-                    className="p-2 text-gray-500 hover:text-indigo-400 hover:bg-indigo-600/10 rounded-lg transition-all"
+                    className="p-2 text-gray-400 hover:text-[#6C3FE8] hover:bg-[#F8F7FF] rounded-lg transition-all"
                     title="Editar legenda"
                   >
                     <Edit3 size={15} />
@@ -153,7 +152,7 @@ export default function ApprovalQueue({ companyId, onCountChange }: Props) {
                   <button
                     onClick={() => reject(post.id)}
                     disabled={isProcessing}
-                    className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-600/10 rounded-lg transition-all"
+                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                     title="Rejeitar"
                   >
                     <XCircle size={15} />
@@ -161,13 +160,10 @@ export default function ApprovalQueue({ companyId, onCountChange }: Props) {
                   <button
                     onClick={() => approve(post.id)}
                     disabled={isProcessing}
-                    className="flex items-center gap-1.5 bg-green-600 hover:bg-green-500 disabled:opacity-60 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-all"
+                    className="flex items-center gap-1.5 bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-all"
                   >
                     {isProcessing ? (
-                      <svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                      </svg>
+                      <div className="w-3 h-3 spinner" />
                     ) : <CheckCircle size={14} />}
                     Aprovar
                   </button>
@@ -177,24 +173,24 @@ export default function ApprovalQueue({ companyId, onCountChange }: Props) {
               {/* Slides preview */}
               {post.content && post.content.length > 0 ? (
                 <div className="px-5 py-4">
-                  <p className="text-xs text-gray-500 mb-3 font-medium">Conteúdo dos slides</p>
+                  <p className="text-xs text-gray-400 font-medium mb-3">Conteúdo dos slides</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
                     {post.content.map((slide, i) => (
-                      <div key={i} className="bg-gray-800 rounded-xl p-3 border border-gray-700">
-                        <p className="text-xs text-gray-500 font-medium mb-1">Slide {i + 1}</p>
-                        {slide.title && <p className="text-sm font-semibold text-gray-200">{slide.title}</p>}
-                        {slide.text && <p className="text-xs text-gray-400 mt-1 line-clamp-3">{slide.text}</p>}
+                      <div key={i} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                        <p className="text-xs text-gray-400 font-medium mb-1">Slide {i + 1}</p>
+                        {slide.title && <p className="text-sm font-semibold text-[#1A1A2E]">{slide.title}</p>}
+                        {slide.text && <p className="text-xs text-gray-500 mt-1 line-clamp-3">{slide.text}</p>}
                       </div>
                     ))}
                   </div>
                 </div>
               ) : (
                 <div className="px-5 py-4">
-                  <div className="flex items-center gap-3 text-gray-600">
+                  <div className="flex items-center gap-3 text-gray-400">
                     <div className="flex gap-1.5">
                       {[...Array(5)].map((_, i) => (
-                        <div key={i} className="w-12 h-16 bg-gray-800 rounded-lg border border-gray-700 flex items-center justify-center">
-                          <span className="text-gray-700 text-xs">{i + 1}</span>
+                        <div key={i} className="w-12 h-16 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center">
+                          <span className="text-gray-300 text-xs">{i + 1}</span>
                         </div>
                       ))}
                     </div>
@@ -205,34 +201,34 @@ export default function ApprovalQueue({ companyId, onCountChange }: Props) {
 
               {/* Caption editor */}
               {editingId === post.id ? (
-                <div className="px-5 pb-4 border-t border-gray-800 pt-4">
-                  <p className="text-xs text-gray-500 font-medium mb-2">Legenda do Instagram</p>
+                <div className="px-5 pb-4 border-t border-gray-100 pt-4">
+                  <p className="text-xs text-gray-400 font-medium mb-2">Legenda do Instagram</p>
                   <textarea
                     value={editCaption}
                     onChange={e => setEditCaption(e.target.value)}
                     rows={3}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-gray-100 placeholder-gray-600 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    className="textarea-field"
                     placeholder="Digite a legenda do post..."
                   />
                   <div className="flex justify-end gap-2 mt-2">
                     <button
                       onClick={() => setEditingId(null)}
-                      className="flex items-center gap-1 text-gray-500 hover:text-gray-300 text-xs px-3 py-1.5 rounded-lg transition-colors"
+                      className="flex items-center gap-1 text-gray-400 hover:text-gray-600 text-xs px-3 py-1.5 rounded-lg transition-colors"
                     >
                       <X size={13} /> Cancelar
                     </button>
                     <button
                       onClick={() => saveEdit(post.id)}
-                      className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-all"
+                      className="flex items-center gap-1 bg-[#6C3FE8] hover:bg-[#5830cc] text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-all"
                     >
                       <Save size={13} /> Salvar
                     </button>
                   </div>
                 </div>
               ) : post.caption ? (
-                <div className="px-5 pb-4 border-t border-gray-800 pt-3">
-                  <p className="text-xs text-gray-500 font-medium mb-1">Legenda</p>
-                  <p className="text-xs text-gray-400 line-clamp-2">{post.caption}</p>
+                <div className="px-5 pb-4 border-t border-gray-100 pt-3">
+                  <p className="text-xs text-gray-400 font-medium mb-1">Legenda</p>
+                  <p className="text-xs text-gray-500 line-clamp-2">{post.caption}</p>
                 </div>
               ) : null}
             </div>

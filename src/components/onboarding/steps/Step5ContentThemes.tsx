@@ -22,6 +22,18 @@ const SUGGESTED_THEMES = [
 
 const emptyTheme = (): ContentTheme => ({ themeName: '', tone: 'educational', slidesCount: 7 })
 
+const toneColor = (tone: string) => {
+  if (tone === 'educational')  return 'bg-blue-50 border-blue-200 text-blue-600'
+  if (tone === 'motivational') return 'bg-orange-50 border-orange-200 text-orange-600'
+  return 'bg-green-50 border-green-200 text-green-600'
+}
+
+const toneSelected = (tone: string) => {
+  if (tone === 'educational')  return 'bg-blue-50 border-blue-400 text-blue-600'
+  if (tone === 'motivational') return 'bg-orange-50 border-orange-400 text-orange-600'
+  return 'bg-green-50 border-green-400 text-green-600'
+}
+
 export default function Step5ContentThemes({ state, updateState, onNext, onBack, loading }: StepProps) {
   const [newTheme, setNewTheme] = useState<ContentTheme>(emptyTheme())
   const [errors, setErrors] = useState<{ [k: string]: string }>({})
@@ -57,28 +69,22 @@ export default function Step5ContentThemes({ state, updateState, onNext, onBack,
     if (validate()) await onNext()
   }
 
-  const toneColor = (tone: string) => {
-    if (tone === 'educational')  return 'bg-blue-600/20 border-blue-500/50 text-blue-300'
-    if (tone === 'motivational') return 'bg-orange-600/20 border-orange-500/50 text-orange-300'
-    return 'bg-green-600/20 border-green-500/50 text-green-300'
-  }
-
   return (
     <div className="space-y-6">
       <div>
-        <div className="flex items-center gap-2 text-amber-400 text-sm font-medium mb-2">
+        <div className="flex items-center gap-2 text-[#6C3FE8] text-sm font-medium mb-2">
           <Sparkles size={16} />
           <span>Etapa 5 de 5 — Última etapa!</span>
         </div>
-        <h1 className="text-2xl font-bold text-white">Temas de conteúdo</h1>
+        <h1 className="text-2xl font-bold text-[#1A1A2E]">Temas de conteúdo</h1>
         <p className="text-gray-400 text-sm mt-1">Defina os temas recorrentes que a IA vai criar para você.</p>
       </div>
 
       {/* Sugestões */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
+      <div className="card p-6 space-y-4">
         <div>
-          <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-1">Sugestões rápidas</h2>
-          <p className="text-xs text-gray-500">Clique para adicionar temas prontos à sua lista</p>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Sugestões rápidas</h2>
+          <p className="form-hint">Clique para adicionar temas prontos à sua lista</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {SUGGESTED_THEMES.map(theme => {
@@ -90,8 +96,8 @@ export default function Step5ContentThemes({ state, updateState, onNext, onBack,
                 disabled={added}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
                   added
-                    ? 'bg-gray-800 border-gray-700 text-gray-600 cursor-default'
-                    : 'bg-gray-800 border-gray-700 hover:border-amber-500 text-gray-300 hover:text-amber-300'
+                    ? 'bg-gray-50 border-gray-200 text-gray-300 cursor-default'
+                    : 'bg-white border-gray-200 hover:border-[#6C3FE8] text-gray-600 hover:text-[#6C3FE8]'
                 }`}
               >
                 {TONE_OPTIONS.find(t => t.value === theme.tone)?.emoji}
@@ -104,24 +110,24 @@ export default function Step5ContentThemes({ state, updateState, onNext, onBack,
       </div>
 
       {/* Adicionar tema custom */}
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
-        <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Adicionar tema personalizado</h2>
+      <div className="card p-6 space-y-4">
+        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Adicionar tema personalizado</h2>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1.5">Nome do tema <span className="text-amber-400">*</span></label>
+          <label className="form-label">Nome do tema <span className="text-[#6C3FE8]">*</span></label>
           <input
             type="text"
             value={newTheme.themeName}
             onChange={e => setNewTheme(prev => ({ ...prev, themeName: e.target.value }))}
             onKeyDown={e => e.key === 'Enter' && addTheme()}
             placeholder="ex: Dicas de cuidados, Novidades da semana..."
-            className={`w-full bg-gray-800 border rounded-xl px-4 py-3 text-gray-100 placeholder-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all ${errors.themeName ? 'border-red-500' : 'border-gray-700 focus:border-amber-500'}`}
+            className={`input-field ${errors.themeName ? 'border-red-400' : ''}`}
           />
-          {errors.themeName && <p className="text-red-400 text-xs mt-1">{errors.themeName}</p>}
+          {errors.themeName && <p className="form-error">{errors.themeName}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">Tom do tema</label>
+          <label className="form-label">Tom do tema</label>
           <div className="grid grid-cols-3 gap-2">
             {TONE_OPTIONS.map(opt => (
               <button
@@ -130,8 +136,8 @@ export default function Step5ContentThemes({ state, updateState, onNext, onBack,
                 onClick={() => setNewTheme(prev => ({ ...prev, tone: opt.value }))}
                 className={`p-3 rounded-xl border text-center transition-all ${
                   newTheme.tone === opt.value
-                    ? toneColor(opt.value) + ' border-opacity-100'
-                    : 'bg-gray-800 border-gray-700 hover:border-gray-600'
+                    ? toneSelected(opt.value)
+                    : 'bg-white border-gray-200 hover:border-gray-300'
                 }`}
               >
                 <div className="text-lg mb-1">{opt.emoji}</div>
@@ -142,7 +148,7 @@ export default function Step5ContentThemes({ state, updateState, onNext, onBack,
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">Número de slides</label>
+          <label className="form-label">Número de slides</label>
           <div className="flex gap-2">
             {SLIDES_OPTIONS.map(n => (
               <button
@@ -151,8 +157,8 @@ export default function Step5ContentThemes({ state, updateState, onNext, onBack,
                 onClick={() => setNewTheme(prev => ({ ...prev, slidesCount: n }))}
                 className={`flex-1 py-2.5 rounded-xl border text-sm font-bold transition-all ${
                   newTheme.slidesCount === n
-                    ? 'bg-amber-600/20 border-amber-500 text-amber-300'
-                    : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
+                    ? 'bg-[#F8F7FF] border-[#6C3FE8] text-[#6C3FE8]'
+                    : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'
                 }`}
               >
                 {n}
@@ -163,41 +169,41 @@ export default function Step5ContentThemes({ state, updateState, onNext, onBack,
 
         <button
           onClick={addTheme}
-          className="w-full flex items-center justify-center gap-2 bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/50 text-amber-300 font-semibold py-3 rounded-xl transition-all text-sm"
+          className="w-full flex items-center justify-center gap-2 bg-[#F8F7FF] hover:bg-[#EDE9FF] border border-[#6C3FE8]/20 text-[#6C3FE8] font-semibold py-3 rounded-xl transition-all text-sm"
         >
           <Plus size={16} />
           Adicionar tema
         </button>
       </div>
 
-      {/* Lista de temas adicionados */}
+      {/* Lista de temas */}
       {state.themes.length > 0 && (
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-3">
-          <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">
+        <div className="card p-6 space-y-3">
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
             Seus temas ({state.themes.length})
           </h2>
-          {errors.global && <p className="text-red-400 text-xs">{errors.global}</p>}
+          {errors.global && <p className="form-error">{errors.global}</p>}
           <div className="space-y-2">
             {state.themes.map((theme, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between bg-gray-800/60 border border-gray-700 rounded-xl px-4 py-3"
+                className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-3"
               >
                 <div className="flex items-center gap-3">
                   <span className="text-base">{TONE_OPTIONS.find(t => t.value === theme.tone)?.emoji}</span>
                   <div>
-                    <p className="text-sm font-medium text-gray-200">{theme.themeName}</p>
+                    <p className="text-sm font-medium text-[#1A1A2E]">{theme.themeName}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className={`text-xs px-2 py-0.5 rounded-md border ${toneColor(theme.tone)}`}>
                         {TONE_OPTIONS.find(t => t.value === theme.tone)?.label}
                       </span>
-                      <span className="text-xs text-gray-500">{theme.slidesCount} slides</span>
+                      <span className="text-xs text-gray-400">{theme.slidesCount} slides</span>
                     </div>
                   </div>
                 </div>
                 <button
                   onClick={() => removeTheme(i)}
-                  className="text-gray-600 hover:text-red-400 transition-colors p-1"
+                  className="text-gray-300 hover:text-red-500 transition-colors p-1"
                 >
                   <Trash2 size={15} />
                 </button>
@@ -208,29 +214,20 @@ export default function Step5ContentThemes({ state, updateState, onNext, onBack,
       )}
 
       {errors.global && state.themes.length === 0 && (
-        <p className="text-red-400 text-xs text-center">{errors.global}</p>
+        <p className="form-error text-center">{errors.global}</p>
       )}
 
       <div className="flex gap-3">
-        <button
-          onClick={onBack}
-          className="flex-1 sm:flex-none sm:w-32 bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold py-4 rounded-xl transition-all border border-gray-700"
-        >
+        <button onClick={onBack} className="btn-secondary flex-1 sm:flex-none sm:w-32 py-4">
           ← Voltar
         </button>
         <button
           onClick={handleNext}
           disabled={loading}
-          className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 disabled:opacity-60 text-white font-semibold py-4 rounded-xl transition-all shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2"
+          className="btn-primary flex-1 py-4"
         >
           {loading ? (
-            <>
-              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-              </svg>
-              Finalizando...
-            </>
+            <><div className="w-4 h-4 spinner" /> Finalizando...</>
           ) : '🚀 Finalizar configuração'}
         </button>
       </div>
