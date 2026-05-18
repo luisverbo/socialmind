@@ -55,12 +55,12 @@ export interface Post {
 }
 
 export const STATUS_CONFIG: Record<Post['status'], { label: string; dot: string; badge: string }> = {
-  draft:     { label: 'Agendado',    dot: 'bg-blue-500',   badge: 'bg-blue-600/20 border-blue-500/40 text-blue-300' },
-  waiting:   { label: 'Aguardando',  dot: 'bg-amber-500',  badge: 'bg-amber-600/20 border-amber-500/40 text-amber-300' },
-  approved:  { label: 'Aprovado',    dot: 'bg-indigo-500', badge: 'bg-indigo-600/20 border-indigo-500/40 text-indigo-300' },
-  published: { label: 'Publicado',   dot: 'bg-green-500',  badge: 'bg-green-600/20 border-green-500/40 text-green-300' },
-  failed:    { label: 'Falhou',      dot: 'bg-red-500',    badge: 'bg-red-600/20 border-red-500/40 text-red-300' },
-  rejected:  { label: 'Rejeitado',   dot: 'bg-gray-500',   badge: 'bg-gray-600/20 border-gray-500/40 text-gray-400' },
+  draft:     { label: 'Agendado',   dot: 'bg-blue-400',   badge: 'bg-blue-50 border-blue-200 text-blue-600' },
+  waiting:   { label: 'Aguardando', dot: 'bg-amber-400',  badge: 'bg-amber-50 border-amber-200 text-amber-700' },
+  approved:  { label: 'Aprovado',   dot: 'bg-purple-400', badge: 'bg-purple-50 border-purple-200 text-purple-600' },
+  published: { label: 'Publicado',  dot: 'bg-green-500',  badge: 'bg-green-50 border-green-200 text-green-700' },
+  failed:    { label: 'Falhou',     dot: 'bg-red-400',    badge: 'bg-red-50 border-red-200 text-red-600' },
+  rejected:  { label: 'Rejeitado',  dot: 'bg-gray-300',   badge: 'bg-gray-100 border-gray-200 text-gray-500' },
 }
 
 export const DAY_OF_WEEK_OPTIONS = [

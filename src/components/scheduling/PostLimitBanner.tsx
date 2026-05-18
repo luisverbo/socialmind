@@ -1,7 +1,7 @@
 'use client'
 
 import type { Company } from '@/types/scheduling'
-import { AlertTriangle, Zap } from 'lucide-react'
+import { AlertTriangle, Zap, ArrowRight } from 'lucide-react'
 
 export default function PostLimitBanner({ company }: { company: Company }) {
   const used = company.posts_used_this_month
@@ -15,29 +15,34 @@ export default function PostLimitBanner({ company }: { company: Company }) {
   if (!isWarning && !isExhausted) return null
 
   return (
-    <div className={`flex items-start gap-3 p-4 rounded-xl border mb-6 ${
+    <div className={`flex items-center gap-4 px-5 py-4 rounded-2xl border mb-6 ${
       isExhausted
-        ? 'bg-red-900/20 border-red-700/50'
-        : 'bg-amber-900/20 border-amber-700/50'
+        ? 'bg-red-50 border-red-200'
+        : 'bg-amber-50 border-amber-200'
     }`}>
-      <div className={`flex-shrink-0 mt-0.5 ${isExhausted ? 'text-red-400' : 'text-amber-400'}`}>
-        {isExhausted ? <AlertTriangle size={18} /> : <Zap size={18} />}
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
+        isExhausted ? 'bg-red-100' : 'bg-amber-100'
+      }`}>
+        {isExhausted
+          ? <AlertTriangle size={18} className="text-red-500" />
+          : <Zap size={18} className="text-amber-500" />
+        }
       </div>
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-semibold ${isExhausted ? 'text-red-300' : 'text-amber-300'}`}>
+        <p className={`text-sm font-semibold ${isExhausted ? 'text-red-700' : 'text-amber-700'}`}>
           {isExhausted
             ? 'Limite de posts atingido'
-            : `Apenas ${remaining} post${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''} este mês`}
+            : `Apenas ${remaining} post${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''}`}
         </p>
-        <p className={`text-xs mt-0.5 ${isExhausted ? 'text-red-400/70' : 'text-amber-400/70'}`}>
+        <p className={`text-xs mt-0.5 ${isExhausted ? 'text-red-500' : 'text-amber-600'}`}>
           {isExhausted
-            ? `Seu plano ${company.plan} atingiu ${limit} posts. Renova em ${resetDate} ou faça upgrade.`
-            : `Você usou ${used} de ${limit} posts. Renova em ${resetDate}.`}
+            ? `Plano ${company.plan} • Renova em ${resetDate}`
+            : `${used} de ${limit} usados • Renova em ${resetDate}`}
         </p>
       </div>
       {isExhausted && (
-        <button className="flex-shrink-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:from-indigo-500 hover:to-purple-500 transition-all">
-          Upgrade
+        <button className="btn-primary px-4 py-2 text-sm flex-shrink-0 flex items-center gap-1.5">
+          Upgrade <ArrowRight size={14} />
         </button>
       )}
     </div>

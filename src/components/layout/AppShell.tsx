@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { CalendarDays, Settings, Bell } from 'lucide-react'
+import { CalendarDays, Settings, Zap } from 'lucide-react'
 import { useCompany } from '@/hooks/useCompany'
 
 const NAV = [
@@ -14,20 +14,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { company } = useCompany()
 
+  const pct = company ? Math.min(100, (company.posts_used_this_month / company.posts_limit) * 100) : 0
+  const barColor = pct >= 90 ? 'bg-red-500' : 'bg-gradient-to-r from-[#6C3FE8] to-[#E84393]'
+
   return (
-    <div className="min-h-screen bg-gray-950 flex">
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 bg-gray-900 border-r border-gray-800 p-6 fixed h-full z-10">
+    <div className="min-h-screen bg-[#F8F7FF] flex">
+
+      {/* ── Desktop sidebar ───────────────────────────── */}
+      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-gray-200 p-6 fixed h-full z-10">
+        {/* Logo */}
         <div className="flex items-center gap-3 mb-10">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-            <span className="text-white font-black text-sm">S</span>
+          <div className="w-9 h-9 rounded-xl gradient-bg flex items-center justify-center shadow-brand-sm">
+            <Zap size={18} className="text-white" strokeWidth={2.5} />
           </div>
-          <div>
-            <p className="text-white font-bold leading-tight">SocialMind</p>
-            {company && <p className="text-gray-500 text-xs truncate max-w-[130px]">{company.name}</p>}
-          </div>
+          <span className="text-lg font-bold text-gradient">SocialMind</span>
         </div>
 
+        {/* Nav links */}
         <nav className="flex-1 space-y-1">
           {NAV.map(item => {
             const active = pathname.startsWith(item.href)
@@ -35,53 +38,51 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-sm font-medium ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${
                   active
-                    ? 'bg-indigo-600/20 border border-indigo-500/40 text-indigo-300'
-                    : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
+                    ? 'bg-[#F8F7FF] text-[#6C3FE8] border border-[#6C3FE8]/15'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
                 }`}
               >
-                <item.icon size={17} />
+                <item.icon size={17} strokeWidth={active ? 2.5 : 2} />
                 {item.label}
               </Link>
             )
           })}
         </nav>
 
+        {/* Usage */}
         {company && (
-          <div className="mt-auto pt-6 border-t border-gray-800">
-            <div className="text-xs text-gray-500 mb-1">Plano {company.plan}</div>
-            <div className="flex justify-between text-xs text-gray-400 mb-1.5">
-              <span>Posts este mês</span>
-              <span className={company.posts_used_this_month >= company.posts_limit ? 'text-red-400' : 'text-gray-300'}>
+          <div className="mt-auto pt-5 border-t border-gray-100">
+            <div className="flex justify-between text-xs mb-1">
+              <span className="text-gray-400 font-medium">Plano {company.plan}</span>
+              <span className={pct >= 90 ? 'text-red-500 font-semibold' : 'text-gray-500'}>
                 {company.posts_used_this_month}/{company.posts_limit}
               </span>
             </div>
-            <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all ${
-                  company.posts_used_this_month >= company.posts_limit ? 'bg-red-500' : 'bg-gradient-to-r from-indigo-500 to-purple-500'
-                }`}
-                style={{ width: `${Math.min(100, (company.posts_used_this_month / company.posts_limit) * 100)}%` }}
-              />
+            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div className={`h-full rounded-full transition-all duration-700 ${barColor}`} style={{ width: `${pct}%` }} />
             </div>
+            <p className="text-xs text-gray-400 mt-1.5">posts este mês</p>
           </div>
         )}
       </aside>
 
-      {/* Mobile top bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-20 bg-gray-900/95 backdrop-blur border-b border-gray-800 px-4 py-3 flex items-center justify-between">
+      {/* ── Mobile top bar ────────────────────────────── */}
+      <div className="lg:hidden fixed top-0 inset-x-0 z-20 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-            <span className="text-white font-black text-xs">S</span>
+          <div className="w-7 h-7 rounded-lg gradient-bg flex items-center justify-center">
+            <Zap size={14} className="text-white" strokeWidth={2.5} />
           </div>
-          <span className="text-white font-bold text-sm">SocialMind</span>
+          <span className="font-bold text-gradient">SocialMind</span>
         </div>
-        <Bell size={18} className="text-gray-400" />
+        {company && (
+          <span className="text-xs text-gray-400">{company.posts_used_this_month}/{company.posts_limit} posts</span>
+        )}
       </div>
 
-      {/* Mobile bottom nav */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-20 bg-gray-900/95 backdrop-blur border-t border-gray-800 flex">
+      {/* ── Mobile bottom nav ─────────────────────────── */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-20 bg-white border-t border-gray-200 flex safe-bottom">
         {NAV.map(item => {
           const active = pathname.startsWith(item.href)
           return (
@@ -89,18 +90,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               key={item.href}
               href={item.href}
               className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
-                active ? 'text-indigo-400' : 'text-gray-500'
+                active ? 'text-[#6C3FE8]' : 'text-gray-400'
               }`}
             >
-              <item.icon size={20} />
+              <item.icon size={20} strokeWidth={active ? 2.5 : 2} />
               {item.label}
             </Link>
           )
         })}
       </div>
 
-      {/* Content */}
-      <main className="flex-1 lg:ml-64 pt-14 lg:pt-0 pb-20 lg:pb-0">
+      {/* ── Content ───────────────────────────────────── */}
+      <main className="flex-1 lg:ml-64 pt-14 lg:pt-0 pb-20 lg:pb-0 min-h-screen">
         {children}
       </main>
     </div>
