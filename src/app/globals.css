@@ -31,10 +31,20 @@
 }
 
 /* ── Base ───────────────────────────────────────────── */
+/* Force light theme — never inherit OS dark mode */
+html {
+  background-color: #F8F7FF !important;
+  color-scheme: light !important;
+}
+
 @layer base {
   * { box-sizing: border-box; }
+  html, body {
+    background-color: #F8F7FF !important;
+    color: #1A1A2E;
+  }
   body {
-    @apply bg-[#F8F7FF] text-[#1A1A2E] antialiased;
+    @apply antialiased;
     font-feature-settings: "cv02","cv03","cv04","cv11";
   }
   input[type='color']                          { -webkit-appearance:none; padding:0; border:none; cursor:pointer; }
@@ -144,6 +154,9 @@
 @layer utilities {
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Safe-area padding for iOS bottom bar */
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
   .gradient-bg { background: var(--brand-gradient); }
   .gradient-border {
