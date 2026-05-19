@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Users, FileText, TrendingUp, AlertTriangle, LogOut, Shield } from 'lucide-react'
+import { Users, FileText, TrendingUp, AlertTriangle } from 'lucide-react'
 
 interface Stats {
   totalClients: number
@@ -17,7 +16,6 @@ interface Stats {
 }
 
 export default function AdminDashboard() {
-  const router = useRouter()
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -54,39 +52,16 @@ export default function AdminDashboard() {
     load()
   }, [])
 
-  const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/admin/login')
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0F0F1A]">
+      <div className="flex items-center justify-center py-20">
         <div className="w-8 h-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F1A] text-white">
-      {/* Navbar */}
-      <nav className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-500">
-            <Shield className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-bold text-lg">SocialMind Admin</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link href="/admin/clients" className="text-sm text-gray-300 hover:text-white transition-colors">Clientes</Link>
-          <button onClick={handleSignOut} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors">
-            <LogOut size={14} /> Sair
-          </button>
-        </div>
-      </nav>
-
-      <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+    <div className="text-white space-y-8">
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <p className="text-gray-400 text-sm mt-1">Visão geral da plataforma</p>
@@ -195,7 +170,6 @@ export default function AdminDashboard() {
             </table>
           </div>
         </div>
-      </main>
     </div>
   )
 }

@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Search, Shield, LogOut, ChevronRight } from 'lucide-react'
+import { Search, ChevronRight } from 'lucide-react'
 
 interface Company {
   id: string
@@ -20,7 +19,6 @@ interface Company {
 const PLAN_OPTS = ['', 'starter', 'pro', 'agency']
 
 export default function AdminClientsPage() {
-  const router = useRouter()
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -37,12 +35,6 @@ export default function AdminClientsPage() {
     load()
   }, [])
 
-  const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/admin/login')
-  }
-
   const filtered = companies.filter(c => {
     const matchSearch = !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.email?.toLowerCase().includes(search.toLowerCase())
     const matchPlan = !planFilter || c.plan === planFilter
@@ -51,23 +43,8 @@ export default function AdminClientsPage() {
   })
 
   return (
-    <div className="min-h-screen bg-[#0F0F1A] text-white">
-      <nav className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-500">
-            <Shield className="w-4 h-4 text-white" />
-          </div>
-          <Link href="/admin" className="font-bold text-lg hover:text-amber-400 transition-colors">SocialMind Admin</Link>
-          <span className="text-gray-600">/</span>
-          <span className="text-gray-300">Clientes</span>
-        </div>
-        <button onClick={handleSignOut} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors">
-          <LogOut size={14} /> Sair
-        </button>
-      </nav>
-
-      <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
-        <h1 className="text-2xl font-bold">Clientes</h1>
+    <div className="text-white space-y-6">
+      <h1 className="text-2xl font-bold">Clientes</h1>
 
         {/* Filters */}
         <div className="flex flex-wrap gap-3 items-center">
@@ -144,7 +121,6 @@ export default function AdminClientsPage() {
             </table>
           )}
         </div>
-      </main>
     </div>
   )
 }

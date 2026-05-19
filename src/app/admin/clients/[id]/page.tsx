@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Shield, LogOut, ArrowLeft, Save, UserX, UserCheck, ExternalLink, Loader2 } from 'lucide-react'
+import { ArrowLeft, Save, UserX, UserCheck, ExternalLink, Loader2 } from 'lucide-react'
 
 const PLANS = ['starter', 'pro', 'agency']
 const PLAN_LIMITS: Record<string, number> = { starter: 10, pro: 30, agency: 100 }
@@ -79,15 +79,9 @@ export default function AdminClientDetailPage() {
     router.push('/')
   }
 
-  const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/admin/login')
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0F0F1A]">
+      <div className="flex items-center justify-center py-20">
         <div className="w-8 h-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
       </div>
     )
@@ -95,7 +89,7 @@ export default function AdminClientDetailPage() {
 
   if (!company) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0F0F1A] text-white">
+      <div className="flex items-center justify-center py-20 text-white">
         <div className="text-center">
           <p className="text-gray-400">Empresa não encontrada</p>
           <Link href="/admin/clients" className="text-purple-400 hover:text-purple-300 text-sm mt-2 inline-block">← Voltar</Link>
@@ -105,24 +99,7 @@ export default function AdminClientDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F1A] text-white">
-      <nav className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-500">
-            <Shield className="w-4 h-4 text-white" />
-          </div>
-          <Link href="/admin" className="font-bold text-lg hover:text-amber-400 transition-colors">SocialMind Admin</Link>
-          <span className="text-gray-600">/</span>
-          <Link href="/admin/clients" className="text-gray-400 hover:text-white transition-colors">Clientes</Link>
-          <span className="text-gray-600">/</span>
-          <span className="text-gray-300 truncate max-w-[150px]">{company.name}</span>
-        </div>
-        <button onClick={handleSignOut} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors">
-          <LogOut size={14} /> Sair
-        </button>
-      </nav>
-
-      <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
+    <div className="text-white space-y-6">
         <div className="flex items-center gap-3">
           <Link href="/admin/clients" className="text-gray-400 hover:text-white transition-colors">
             <ArrowLeft size={18} />
@@ -210,7 +187,6 @@ export default function AdminClientDetailPage() {
             </div>
           </button>
         </div>
-      </main>
     </div>
   )
 }
