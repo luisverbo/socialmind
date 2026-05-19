@@ -28,7 +28,7 @@ export function buildAuthUrl(state: string): string {
   const params = new URLSearchParams({
     client_id:     appId,
     redirect_uri:  redirect,
-    scope:         'instagram_business_basic,instagram_content_publish,instagram_manage_comments',
+    scope:         'instagram_business_basic,instagram_business_content_publish,instagram_business_manage_comments',
     response_type: 'code',
     state,
   })
