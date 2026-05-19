@@ -22,7 +22,7 @@ apt-get install -y \
   libxfixes3 \
   libxrandr2 \
   libgbm1 \
-  libasound2 \
+  libasound2t64 \
   libpango-1.0-0 \
   libpangocairo-1.0-0 \
   libx11-xcb1 \
