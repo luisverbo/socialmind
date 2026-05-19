@@ -50,6 +50,10 @@ async function runPublish(postId: string): Promise<string> {
   }
   await Promise.all(childIds.map(id => waitForContainer(id, accessToken, 30_000)))
 
+  // Buffer: Instagram marks containers as FINISHED before they're available
+  // in the carousel creation API — a known race condition in the Graph API.
+  await new Promise(r => setTimeout(r, 5000))
+
   // 4. Create carousel container
   const caption    = post.caption ?? ''
   const carouselId = await createCarouselContainer(igUserId, childIds, caption, accessToken)
