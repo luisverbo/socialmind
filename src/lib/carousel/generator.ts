@@ -48,10 +48,20 @@ function buildUserPrompt(
 ): string {
   const imageUrls = mediaItems.filter(m => m.url).slice(0, 5).map(m => m.url)
   const hasImages = imageUrls.length > 0
+  const now = new Date()
+  const seed = `${now.toISOString().slice(0, 16)}-${Math.random().toString(36).slice(2, 7)}`
 
-  return `Crie um carrossel de Instagram com ${slidesCount} slides sobre o tema: "${theme}".
+  return `[Geração única: ${seed}]
+
+Crie um carrossel de Instagram ORIGINAL e DIFERENTE dos anteriores com ${slidesCount} slides sobre o tema: "${theme}".
 
 Tom: ${TONE_MAP[tone]}
+
+IMPORTANTE — VARIAÇÃO OBRIGATÓRIA:
+- Use um ângulo/abordagem DIFERENTE e ÚNICO para este tema
+- Escolha um aspecto específico e surpreendente, não o óbvio
+- Títulos e estrutura devem ser frescos, nunca genéricos
+- Cada geração deve parecer criada por um ser humano diferente
 
 ESTRUTURA OBRIGATÓRIA:
 - Slide 1: tipo "cover" — título impactante e subtítulo que gera curiosidade
@@ -102,7 +112,7 @@ export async function generateCarouselContent(
   const userPrompt = buildUserPrompt(theme, tone, slidesCount, mediaItems)
 
   const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5',
+    model: 'claude-sonnet-4-6',
     max_tokens: 4096,
     system: [
       {

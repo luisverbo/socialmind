@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { useCompany } from '@/hooks/useCompany'
 import { STATUS_CONFIG } from '@/types/scheduling'
 import type { Post } from '@/types/scheduling'
-import { Eye, Check, X, Trash2, ImageIcon, Search, Loader2, Sparkles } from 'lucide-react'
+import { Eye, Check, X, Trash2, ImageIcon, Search, Loader2, Sparkles, Send } from 'lucide-react'
 
 const STATUS_FILTERS = [
   { value: '', label: 'Todos' },
@@ -77,6 +77,25 @@ export default function PostsPage() {
     setActing(a => ({ ...a, [post.id]: true }))
     await supabase.from('posts').delete().eq('id', post.id)
     setPosts(ps => ps.filter(p => p.id !== post.id))
+  }
+
+  const publishNow = async (post: Post) => {
+    if (!confirm('Publicar este post no Instagram agora?')) return
+    setActing(a => ({ ...a, [post.id]: true }))
+    try {
+      const res = await fetch('/api/publish-now', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ post_id: post.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Erro ao publicar')
+      await load()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erro ao publicar')
+    } finally {
+      setActing(a => ({ ...a, [post.id]: false }))
+    }
   }
 
   const generateDraft = async (post: Post) => {
@@ -240,6 +259,16 @@ export default function PostsPage() {
                         Rejeitar
                       </button>
                     </div>
+                  )}
+                  {post.status === 'approved' && (
+                    <button
+                      onClick={() => publishNow(post)}
+                      disabled={busy}
+                      className="w-full flex items-center justify-center gap-1 text-[10px] font-semibold py-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors disabled:opacity-50 mt-1"
+                    >
+                      {busy ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
+                      {busy ? 'Publicando...' : 'Publicar agora'}
+                    </button>
                   )}
                 </div>
               </div>
