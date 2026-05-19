@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, AlertCircle } from 'lucide-react'
+import { X, AlertCircle, CheckCircle2, Sparkles } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { ContentTheme } from '@/types/scheduling'
 import { DAY_OF_WEEK_OPTIONS } from '@/types/scheduling'
@@ -13,6 +13,8 @@ interface Props {
 }
 
 const SLIDES_OPTIONS = [5, 7, 10] as const
+
+type Step = 'form' | 'generating' | 'done'
 
 function getNextOccurrences(dayOfWeek: string, time: string, weeks: number): Date[] {
   const DAY_MAP: Record<string, number> = {
@@ -34,16 +36,16 @@ function getNextOccurrences(dayOfWeek: string, time: string, weeks: number): Dat
 }
 
 export default function NewScheduleModal({ companyId, onClose, onCreated }: Props) {
-  const [type, setType] = useState<'recurring' | 'one_time'>('recurring')
-  const [dayOfWeek, setDayOfWeek] = useState('monday')
+  const [type, setType]               = useState<'recurring' | 'one_time'>('recurring')
+  const [dayOfWeek, setDayOfWeek]     = useState('monday')
   const [scheduledDate, setScheduledDate] = useState('')
   const [scheduledTime, setScheduledTime] = useState('09:00')
-  const [themeId, setThemeId] = useState('')
+  const [themeId, setThemeId]         = useState('')
   const [publishMode, setPublishMode] = useState<'automatic' | 'review'>('review')
   const [slidesCount, setSlidesCount] = useState<5 | 7 | 10>(7)
-  const [themes, setThemes] = useState<ContentTheme[]>([])
-  const [loading, setLoading] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [themes, setThemes]           = useState<ContentTheme[]>([])
+  const [step, setStep]               = useState<Step>('form')
+  const [errors, setErrors]           = useState<Record<string, string>>({})
 
   useEffect(() => {
     supabase.from('content_themes').select('*').eq('company_id', companyId)
@@ -60,7 +62,7 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
 
   const handleSubmit = async () => {
     if (!validate()) return
-    setLoading(true)
+    setStep('generating')
     try {
       const conflictQuery = supabase
         .from('post_schedules')
@@ -78,18 +80,18 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
       const { data: conflict } = await conflictQuery.limit(1)
       if (conflict && conflict.length > 0) {
         setErrors({ global: 'Já existe um agendamento neste dia e horário.' })
-        setLoading(false)
+        setStep('form')
         return
       }
 
       const schedulePayload: Record<string, unknown> = {
-        company_id: companyId,
-        theme_id: themeId || null,
+        company_id:   companyId,
+        theme_id:     themeId || null,
         type,
         scheduled_time: scheduledTime + ':00',
         publish_mode: publishMode,
-        status: 'active',
-        repeat: type === 'recurring',
+        status:       'active',
+        repeat:       type === 'recurring',
       }
       if (type === 'recurring') {
         schedulePayload.day_of_week = dayOfWeek
@@ -104,40 +106,111 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
         .single()
       if (schedErr) throw new Error(schedErr.message)
 
+      // Create draft posts and capture IDs
+      let firstPostId: string | null = null
+
       if (type === 'recurring') {
         const dates = getNextOccurrences(dayOfWeek, scheduledTime, 4)
         if (dates.length > 0) {
-          await supabase.from('posts').insert(
-            dates.map(d => ({
-              company_id: companyId,
-              schedule_id: schedule.id,
-              status: 'draft',
-              scheduled_for: d.toISOString(),
-              content: [],
-              slides_html: [],
-              slides_images: [],
-            }))
-          )
+          const { data: insertedPosts } = await supabase
+            .from('posts')
+            .insert(
+              dates.map(d => ({
+                company_id:    companyId,
+                schedule_id:   schedule.id,
+                status:        'draft',
+                scheduled_for: d.toISOString(),
+                content:       [],
+                slides_html:   [],
+                slides_images: [],
+              }))
+            )
+            .select('id, scheduled_for')
+            .order('scheduled_for', { ascending: true })
+          firstPostId = insertedPosts?.[0]?.id ?? null
         }
       } else {
         const dt = new Date(`${scheduledDate}T${scheduledTime}:00`)
-        await supabase.from('posts').insert({
-          company_id: companyId,
-          schedule_id: schedule.id,
-          status: 'draft',
-          scheduled_for: dt.toISOString(),
-          content: [],
-          slides_html: [],
-          slides_images: [],
-        })
+        const { data: insertedPost } = await supabase
+          .from('posts')
+          .insert({
+            company_id:    companyId,
+            schedule_id:   schedule.id,
+            status:        'draft',
+            scheduled_for: dt.toISOString(),
+            content:       [],
+            slides_html:   [],
+            slides_images: [],
+          })
+          .select('id')
+          .single()
+        firstPostId = insertedPost?.id ?? null
       }
 
-      onCreated()
+      // Generate the first/nearest post immediately
+      if (firstPostId) {
+        const res = await fetch('/api/generate-draft', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ post_id: firstPostId }),
+        })
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}))
+          console.error('[NewScheduleModal] Geração falhou:', err)
+          // Non-fatal: schedule was created, generation can be retried
+        }
+      }
+
+      setStep('done')
     } catch (e: unknown) {
       setErrors({ global: e instanceof Error ? e.message : 'Erro ao criar agendamento' })
-    } finally {
-      setLoading(false)
+      setStep('form')
     }
+  }
+
+  if (step === 'generating') {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+        <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl p-8 text-center">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+               style={{ background: 'var(--brand-gradient)' }}>
+            <Sparkles size={28} className="text-white" />
+          </div>
+          <h3 className="text-lg font-bold text-[#1A1A2E] mb-2">Gerando seu carrossel...</h3>
+          <p className="text-sm text-gray-400 mb-6">
+            A IA está criando o conteúdo. Isso pode levar até 30 segundos.
+          </p>
+          <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+            <div className="h-full rounded-full animate-pulse"
+                 style={{ background: 'var(--brand-gradient)', width: '60%' }} />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (step === 'done') {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+        <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl p-8 text-center">
+          <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 size={28} className="text-green-600" />
+          </div>
+          <h3 className="text-lg font-bold text-[#1A1A2E] mb-2">Post gerado!</h3>
+          <p className="text-sm text-gray-500 mb-6">
+            Revise e aprove quando quiser. Na hora agendada ele será publicado automaticamente.
+          </p>
+          <button
+            onClick={onCreated}
+            className="btn-primary w-full py-3"
+          >
+            Ver aprovações
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -293,7 +366,9 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
                 {getNextOccurrences(dayOfWeek, scheduledTime, 4).map((d, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs text-gray-500">
                     <div className="w-1 h-1 rounded-full bg-[#6C3FE8]/40" />
-                    {d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'short' })} às {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    {i === 0 && <span className="text-[#6C3FE8] font-medium">→ Gerado agora</span>}
+                    {i > 0 && <span>Gerado domingo</span>}
+                    {' '}— {d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'short' })} às {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 ))}
               </div>
@@ -302,12 +377,9 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
 
           <button
             onClick={handleSubmit}
-            disabled={loading}
             className="btn-primary w-full py-4"
           >
-            {loading ? (
-              <><div className="w-4 h-4 spinner" /> Criando...</>
-            ) : 'Criar agendamento'}
+            Criar agendamento e gerar conteúdo
           </button>
         </div>
       </div>

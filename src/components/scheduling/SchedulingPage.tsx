@@ -122,7 +122,7 @@ export default function SchedulingPage() {
         <NewScheduleModal
           companyId={companyId}
           onClose={() => setShowModal(false)}
-          onCreated={() => { setShowModal(false); refresh() }}
+          onCreated={() => { setShowModal(false); refresh(); setTab('approval') }}
         />
       )}
     </div>
