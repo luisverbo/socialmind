@@ -7,16 +7,37 @@ const TONE_MAP = {
   promotional: 'promocional e persuasivo',
 }
 
+// Hook formulas proven to stop the scroll on Instagram
+const HOOK_FORMULAS = `
+FÓRMULAS DE GANCHO PARA O SLIDE 1 (escolha UMA e adapte ao tema):
+1. NÚMERO + PROMESSA INESPERADA  → "7 erros que fazem você perder clientes sem perceber"
+2. O QUE NINGUÉM TE CONTA       → "O que ninguém te conta sobre [tema]"
+3. INVERSÃO DO SENSO COMUM      → "Parar de [hábito comum] foi o que mais aumentou meu [resultado]"
+4. PERGUNTA QUE FAZ PENSAR      → "Você sabia que 90% das pessoas [problema comum]?"
+5. REVELAÇÃO + URGÊNCIA         → "Descobri [coisa] e mudou tudo. Mas poucos sabem disso."
+6. ANTES/DEPOIS                 → "Eu costumava [problema] até descobrir [solução]"
+7. AVISO/ALERTA                 → "Se você faz [coisa comum], pare agora e leia isso"
+8. SEGREDO/BASTIDORES           → "O segredo que [referência do setor] não quer que você saiba"
+9. RESULTADO ESPECÍFICO         → "Como consegui [resultado concreto] em [prazo curto]"
+10. CONTRA-INTUITIVO            → "A estratégia que parece errada mas triplica [resultado]"
+
+REGRAS DO GANCHO PERFEITO:
+- Máx 8 palavras no título principal (impacto imediato)
+- Gera curiosidade sem entregar a resposta
+- Faz o leitor pensar "preciso ver o resto"
+- Usa números concretos quando possível
+- NUNCA use títulos genéricos como "Dicas de marketing" ou "Como ter sucesso"`
+
 function buildSystemPrompt(ctx: CompanyContext, mediaItems: MediaItem[]): string {
   const mediaSection = mediaItems.length > 0
-    ? `\n\nIMGENS DISPONÍVEIS NA BIBLIOTECA:\n${mediaItems.slice(0, 10).map(m => `- [${m.category}] ${m.url}${m.description ? ' — ' + m.description : ''}`).join('\n')}`
+    ? `\n\nIMAGENS DISPONÍVEIS NA BIBLIOTECA:\n${mediaItems.slice(0, 10).map(m => `- [${m.category}] ${m.url}${m.description ? ' — ' + m.description : ''}`).join('\n')}`
     : ''
 
   if (ctx.system_prompt) {
     return ctx.system_prompt + mediaSection
   }
 
-  return `Você é um especialista em criação de conteúdo para Instagram para a empresa "${ctx.business_name}".
+  return `Você é um copywriter especializado em conteúdo viral para Instagram da empresa "${ctx.business_name}".
 
 SOBRE O NEGÓCIO:
 - Nicho: ${ctx.niche}
@@ -32,12 +53,11 @@ ${ctx.forbidden_words ? `PALAVRAS PROIBIDAS (nunca usar): ${ctx.forbidden_words}
 ${ctx.post_examples ? `\nEXEMPLOS DE POSTS ANTERIORES:\n${ctx.post_examples}` : ''}
 ${mediaSection}
 
-REGRAS GERAIS:
-- Crie conteúdo em português brasileiro
-- Seja direto e conciso em cada slide
-- Use linguagem adequada ao público-alvo
-- Não use jargões ou termos técnicos desnecessários
-- Cada slide deve ter uma mensagem clara e única`
+PRINCÍPIOS DE QUALIDADE:
+- Conteúdo em português brasileiro, direto e sem jargões
+- Cada slide tem UMA ideia clara — sem sobrecarregar
+- Linguagem adequada ao público-alvo da empresa
+- Textos concisos: títulos impactantes, bullets curtos e práticos`
 }
 
 function buildUserPrompt(
@@ -48,56 +68,47 @@ function buildUserPrompt(
 ): string {
   const imageUrls = mediaItems.filter(m => m.url).slice(0, 5).map(m => m.url)
   const hasImages = imageUrls.length > 0
-  const now = new Date()
-  const seed = `${now.toISOString().slice(0, 16)}-${Math.random().toString(36).slice(2, 7)}`
+  const seed = `${new Date().toISOString().slice(0, 16)}-${Math.random().toString(36).slice(2, 7)}`
 
-  return `[Geração única: ${seed}]
+  return `[ID único: ${seed}]
 
-Crie um carrossel de Instagram ORIGINAL e DIFERENTE dos anteriores com ${slidesCount} slides sobre o tema: "${theme}".
-
+Crie um carrossel de Instagram com ${slidesCount} slides sobre: "${theme}"
 Tom: ${TONE_MAP[tone]}
 
-IMPORTANTE — VARIAÇÃO OBRIGATÓRIA:
-- Use um ângulo/abordagem DIFERENTE e ÚNICO para este tema
-- Escolha um aspecto específico e surpreendente, não o óbvio
-- Títulos e estrutura devem ser frescos, nunca genéricos
-- Cada geração deve parecer criada por um ser humano diferente
+${HOOK_FORMULAS}
 
-ESTRUTURA OBRIGATÓRIA:
-- Slide 1: tipo "cover" — título impactante e subtítulo que gera curiosidade
-- Slides 2 a ${slidesCount - 1}: tipo "content" — conteúdo principal dividido em tópicos claros
-- Último slide: tipo "cta" — call-to-action poderoso e direto
+ESTRUTURA DOS ${slidesCount} SLIDES:
 
-${hasImages ? `IMPORTANTE: Use imagens da biblioteca quando fizer sentido (tipo "image"). URLs disponíveis:\n${imageUrls.map((u, i) => `${i + 1}. ${u}`).join('\n')}\n` : ''}
+SLIDE 1 — CAPA (type: "cover")
+Aplicar obrigatoriamente uma das fórmulas de gancho acima.
+- title: gancho principal (máx 8 palavras, sem ponto final)
+- subtitle: categoria/tema em 2-3 palavras (ex: "MARKETING DIGITAL")
+- body: complemento que intensifica a curiosidade (1 frase, máx 12 palavras)
 
-Retorne APENAS um JSON válido (sem markdown, sem explicações) com este formato exato:
+SLIDES 2 a ${slidesCount - 1} — CONTEÚDO (type: "content")
+Cada slide = um tópico prático e acionável.
+- title: nome do tópico (curto e direto)
+- bullets: 2 a 4 pontos concisos, práticos, que entregam valor real
+- body: contexto opcional, apenas se necessário (máx 1 frase)
+
+SLIDE ${slidesCount} — CTA (type: "cta")
+Fechar com uma chamada clara e motivadora.
+- title: frase de fechamento impactante
+- body: benefício direto de agir agora
+- cta: texto do botão (ex: "Salva esse post!", "Compartilha com alguém!")
+- subtitle: instrução secundária (ex: "Mais dicas nos stories")
+
+VARIAÇÃO OBRIGATÓRIA: use um ângulo ÚNICO e SURPREENDENTE para este tema — nunca o óbvio.
+${hasImages ? `\nUse imagens da biblioteca quando fizer sentido (type: "image"):\n${imageUrls.map((u, i) => `${i + 1}. ${u}`).join('\n')}\n` : ''}
+
+Retorne SOMENTE JSON válido, sem markdown:
 {
   "slides": [
-    {
-      "slide": 1,
-      "type": "cover",
-      "title": "Título principal",
-      "subtitle": "Categoria ou tema breve",
-      "body": "Subtítulo ou frase de impacto"
-    },
-    {
-      "slide": 2,
-      "type": "content",
-      "title": "Título do tópico",
-      "body": "Explicação breve (opcional)",
-      "bullets": ["Ponto 1", "Ponto 2", "Ponto 3"],
-      "footer": "@perfil_da_empresa"
-    },
-    {
-      "slide": ${slidesCount},
-      "type": "cta",
-      "title": "Chamada para ação",
-      "body": "Descrição do benefício",
-      "cta": "Texto do botão",
-      "subtitle": "Instrução secundária (ex: Link na bio)"
-    }
+    {"slide":1,"type":"cover","title":"...","subtitle":"...","body":"..."},
+    {"slide":2,"type":"content","title":"...","bullets":["...","...","..."],"body":"..."},
+    {"slide":${slidesCount},"type":"cta","title":"...","body":"...","cta":"...","subtitle":"..."}
   ],
-  "caption": "Legenda completa para o Instagram com até 2200 caracteres, incluindo emojis relevantes e 5 hashtags no final"
+  "caption": "Legenda com até 2200 caracteres, emojis naturais e 5 hashtags relevantes no final"
 }`
 }
 
@@ -112,13 +123,13 @@ export async function generateCarouselContent(
   const userPrompt = buildUserPrompt(theme, tone, slidesCount, mediaItems)
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 4096,
+    model: 'claude-haiku-4-5-20251001', // ~75% cheaper than Sonnet, excellent for structured JSON
+    max_tokens: 2500,
     system: [
       {
         type: 'text',
         text: systemPrompt,
-        cache_control: { type: 'ephemeral' },
+        cache_control: { type: 'ephemeral' }, // caches system prompt per company context
       },
     ],
     messages: [
@@ -132,21 +143,19 @@ export async function generateCarouselContent(
     .join('')
     .trim()
 
-  // Strip potential markdown code fences
   const json = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
 
   let parsed: CarouselContent
   try {
     parsed = JSON.parse(json)
   } catch {
-    throw new Error(`Claude retornou JSON inválido: ${text.slice(0, 200)}`)
+    throw new Error(`Modelo retornou JSON inválido: ${text.slice(0, 200)}`)
   }
 
   if (!Array.isArray(parsed.slides) || parsed.slides.length === 0) {
-    throw new Error('Claude não retornou slides válidos')
+    throw new Error('Modelo não retornou slides válidos')
   }
 
-  // Normalize slide numbers
   const slides: SlideContent[] = parsed.slides.map((s, i) => ({
     slide: i + 1,
     type: s.type ?? 'content',
