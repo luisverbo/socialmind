@@ -146,12 +146,7 @@ function buildUserPrompt(
 
 Crie um carrossel com ${slidesCount} slides sobre: "${theme}"
 Tom: ${TONE_MAP[tone]}
-
-PASSO 1 — DEFINA O AVATAR (internamente, não inclua no JSON):
-Quem é a UMA pessoa específica para quem este carrossel é escrito?
-Qual é o problema exato que ela tem com este tema?
-Escreva TODOS os slides como se fosse uma conversa direta com ela.
-NUNCA misture perfis diferentes no mesmo carrossel.
+Avatar: escolha UM perfil específico do público-alvo e escreva TODO o carrossel exclusivamente para essa pessoa — nunca misture perfis diferentes no mesmo carrossel.
 
 ${HOOK_FORMULAS}
 
