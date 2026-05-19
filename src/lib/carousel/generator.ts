@@ -30,6 +30,29 @@ ${ctx.post_examples ? `\nEXEMPLOS DE POSTS ANTERIORES (use como referência de t
 ${mediaSection}
 
 ════════════════════════════════════════
+LEI Nº 1 — AVATAR ÚNICO (a mais importante)
+════════════════════════════════════════
+
+Cada carrossel fala com UMA única pessoa, em UMA situação específica.
+
+❌ ERRADO — falar com todo mundo ao mesmo tempo:
+"Este post é para empreendedores, criadores de conteúdo, profissionais de marketing e quem quer crescer online."
+→ Resultado: ninguém se identifica, ninguém salva, ninguém comenta.
+
+✅ CERTO — escolher UM avatar e escrever TUDO para ele:
+Avatar: "Dono de salão de beleza que tem 300 seguidores e não entende por que ninguém aparece pelo Instagram"
+→ Cada slide, cada bullet, cada palavra fala diretamente com essa pessoa.
+→ Resultado: ela sente que o post foi escrito especialmente pra ela.
+
+COMO ESCOLHER O AVATAR:
+Olhe o público-alvo da empresa e escolha o perfil MAIS ESPECÍFICO E URGENTE:
+- Qual é a dor que dói mais agora?
+- Quem está mais próximo de comprar/agir?
+- Quem vai salvar esse post e mostrar pra um amigo?
+
+TESTE DO AVATAR: leia o slide 1 em voz alta e pergunte "para QUEM exatamente estou falando?" Se a resposta for vaga ("empreendedores em geral"), reescreva até ser específico ("dona de ateliê que vende pelo WhatsApp mas quer parar de depender de indicação").
+
+════════════════════════════════════════
 REGRAS ABSOLUTAS DE QUALIDADE
 ════════════════════════════════════════
 
@@ -123,6 +146,12 @@ function buildUserPrompt(
 
 Crie um carrossel com ${slidesCount} slides sobre: "${theme}"
 Tom: ${TONE_MAP[tone]}
+
+PASSO 1 — DEFINA O AVATAR (internamente, não inclua no JSON):
+Quem é a UMA pessoa específica para quem este carrossel é escrito?
+Qual é o problema exato que ela tem com este tema?
+Escreva TODOS os slides como se fosse uma conversa direta com ela.
+NUNCA misture perfis diferentes no mesmo carrossel.
 
 ${HOOK_FORMULAS}
 
