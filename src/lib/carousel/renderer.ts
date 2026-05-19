@@ -1,22 +1,62 @@
-import chromium from '@sparticuz/chromium'
-import puppeteer from 'puppeteer-core'
-import type { Browser } from 'puppeteer-core'
 import { buildSlideHtml } from './templates'
 import type { SlideContent, BrandColors } from './types'
 
-let browserInstance: Browser | null = null
+const RENDERER_URL = process.env.RENDERER_URL    // ex: http://2.24.210.233:3001
+const RENDERER_KEY = process.env.RENDERER_API_KEY
+const VPS_TIMEOUT  = 30_000
+const MAX_RETRIES  = 2
 
-async function getBrowser(): Promise<Browser> {
-  if (browserInstance && browserInstance.connected) return browserInstance
+// ─── VPS renderer ─────────────────────────────────────────────────────────────
 
-  const isDev = process.env.NODE_ENV === 'development'
+async function renderViaVPS(html: string): Promise<Buffer> {
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), VPS_TIMEOUT)
 
-  // In development use a local Chrome if PUPPETEER_EXECUTABLE_PATH is set,
-  // otherwise fall back to the @sparticuz/chromium binary (works on Linux CI too).
+    try {
+      const res = await fetch(`${RENDERER_URL}/render`, {
+        method:  'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key':    RENDERER_KEY ?? '',
+        },
+        body:   JSON.stringify({ html, width: 1080, height: 1080, scale: 2 }),
+        signal: controller.signal,
+      })
+
+      clearTimeout(timer)
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
+        throw new Error((err as { error?: string }).error ?? `HTTP ${res.status}`)
+      }
+
+      const { png } = await res.json() as { png: string }
+      return Buffer.from(png, 'base64')
+    } catch (err) {
+      clearTimeout(timer)
+      if (attempt === MAX_RETRIES) throw err
+      console.warn(`[renderer] VPS tentativa ${attempt} falhou, tentando novamente…`)
+      await new Promise(r => setTimeout(r, 1000 * attempt))
+    }
+  }
+  throw new Error('VPS render falhou após todas as tentativas')
+}
+
+// ─── Fallback local (Puppeteer + @sparticuz/chromium) ─────────────────────────
+
+async function renderLocally(html: string): Promise<Buffer> {
+  // Importações dinâmicas para não quebrar o bundle quando VPS está ativo
+  const [{ default: chromium }, { default: puppeteer }] = await Promise.all([
+    import('@sparticuz/chromium'),
+    import('puppeteer-core'),
+  ])
+
   const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH
     ?? await chromium.executablePath()
 
-  browserInstance = await puppeteer.launch({
+  const isDev = process.env.NODE_ENV === 'development'
+  const browser = await puppeteer.launch({
     args: isDev
       ? ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
       : chromium.args,
@@ -25,8 +65,22 @@ async function getBrowser(): Promise<Browser> {
     defaultViewport: { width: 1080, height: 1080, deviceScaleFactor: 2 },
   })
 
-  return browserInstance
+  try {
+    const page = await browser.newPage()
+    await page.setViewport({ width: 1080, height: 1080, deviceScaleFactor: 2 })
+    await page.setContent(html, { waitUntil: 'load', timeout: 15_000 })
+    const screenshot = await page.screenshot({
+      type: 'png',
+      clip: { x: 0, y: 0, width: 1080, height: 1080 },
+    })
+    await page.close()
+    return Buffer.from(screenshot)
+  } finally {
+    await browser.close()
+  }
 }
+
+// ─── API pública ──────────────────────────────────────────────────────────────
 
 export async function renderSlide(
   slide: SlideContent,
@@ -34,21 +88,18 @@ export async function renderSlide(
   slideIndex: number,
   total: number
 ): Promise<Buffer> {
-  const html    = buildSlideHtml(slide, colors, slideIndex, total)
-  const browser = await getBrowser()
-  const page    = await browser.newPage()
+  const html = buildSlideHtml(slide, colors, slideIndex, total)
 
-  try {
-    await page.setViewport({ width: 1080, height: 1080, deviceScaleFactor: 2 })
-    await page.setContent(html, { waitUntil: 'load', timeout: 15000 })
-    const screenshot = await page.screenshot({
-      type: 'png',
-      clip: { x: 0, y: 0, width: 1080, height: 1080 },
-    })
-    return Buffer.from(screenshot)
-  } finally {
-    await page.close()
+  if (RENDERER_URL && RENDERER_KEY) {
+    try {
+      return await renderViaVPS(html)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error(`[renderer] VPS falhou (${msg}) — usando fallback local`)
+    }
   }
+
+  return renderLocally(html)
 }
 
 export async function renderAllSlides(
@@ -59,11 +110,3 @@ export async function renderAllSlides(
     slides.map((slide, i) => renderSlide(slide, colors, i + 1, slides.length))
   )
 }
-
-export async function closeBrowser(): Promise<void> {
-  if (browserInstance) {
-    await browserInstance.close()
-    browserInstance = null
-  }
-}
-
