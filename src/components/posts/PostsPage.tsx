@@ -88,8 +88,9 @@ export default function PostsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ post_id: post.id }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Erro ao publicar')
+      let data: Record<string, string> = {}
+      try { data = await res.json() } catch { /* response wasn't JSON */ }
+      if (!res.ok) throw new Error(data.error ?? `Erro ao publicar (HTTP ${res.status})`)
       await load()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Erro ao publicar')
@@ -106,8 +107,9 @@ export default function PostsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ post_id: post.id }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Erro ao gerar')
+      let data: Record<string, string> = {}
+      try { data = await res.json() } catch { /* response wasn't JSON */ }
+      if (!res.ok) throw new Error(data.error ?? `Erro ao gerar (HTTP ${res.status})`)
       await load()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Erro ao gerar post')

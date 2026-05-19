@@ -30,7 +30,8 @@ export default function DashboardPage() {
       .catch(() => {})
   }
 
-  const isEmpty = !dash.loading && !dash.hasPosts && !dash.hasSchedules
+  // Only show empty state when data loaded successfully AND user genuinely has nothing
+  const isEmpty = !dash.loading && !dash.error && !dash.hasPosts && !dash.hasSchedules
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F8F7FF' }}>

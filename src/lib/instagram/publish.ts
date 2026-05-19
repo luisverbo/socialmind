@@ -6,8 +6,9 @@ import {
 } from './client'
 import { getToken } from './tokens'
 
-const TIMEOUT_MS  = 30_000
-const MAX_RETRIES = 2
+// Keep each attempt well under Vercel's 60s function limit
+const TIMEOUT_MS  = 20_000
+const MAX_RETRIES = 1   // 2 total attempts × 20s + 2s delay = 42s max
 
 function adminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
