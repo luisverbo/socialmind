@@ -54,9 +54,10 @@ async function runPublish(postId: string): Promise<string> {
   // in the carousel creation API — a known race condition in the Graph API.
   await new Promise(r => setTimeout(r, 5000))
 
-  // 4. Create carousel container
+  // 4. Create carousel container and wait until it is also FINISHED
   const caption    = post.caption ?? ''
   const carouselId = await createCarouselContainer(igUserId, childIds, caption, accessToken)
+  await waitForContainer(carouselId, accessToken, 30_000)
 
   // 5. Publish — once this succeeds the post IS live on Instagram
   const igPostId = await publishContainer(igUserId, carouselId, accessToken)
