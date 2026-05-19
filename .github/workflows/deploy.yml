@@ -20,7 +20,13 @@ jobs:
       - name: Pull environment variables from Vercel
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Build project with Vercel env vars
+      - name: Export env vars to GitHub environment
+        run: |
+          if [ -f .vercel/.env.production.local ]; then
+            cat .vercel/.env.production.local >> $GITHUB_ENV
+          fi
+
+      - name: Build project
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy prebuilt output to Production
