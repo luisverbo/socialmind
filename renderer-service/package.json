@@ -1,0 +1,23 @@
+{
+  "name": "socialmind-renderer",
+  "version": "1.0.0",
+  "description": "HTML to PNG renderer service using Puppeteer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "tsc",
+    "dev": "ts-node server.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.3.1",
+    "puppeteer": "^22.12.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.3"
+  }
+}
