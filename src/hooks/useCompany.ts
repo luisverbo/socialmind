@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import type { Company } from '@/types/scheduling'
 
 export const COMPANY_ID_KEY = 'socialmind_company_id'
@@ -28,9 +29,31 @@ export function useCompany() {
       fetchCompany(id)
       return
     }
-    // Fallback: auto-detect first company from DB and persist it
+
+    // Try auth-based lookup if no localStorage
     ;(async () => {
       try {
+        const browserClient = createClient()
+        const { data: { user } } = await browserClient.auth.getUser()
+
+        if (user) {
+          // Fetch company by user_id
+          const { data: authCompany } = await supabase
+            .from('companies')
+            .select('*')
+            .eq('user_id', user.id)
+            .single()
+
+          if (authCompany) {
+            localStorage.setItem(COMPANY_ID_KEY, authCompany.id)
+            setCompanyId(authCompany.id)
+            setCompany(authCompany)
+            setLoading(false)
+            return
+          }
+        }
+
+        // Fallback: auto-detect first company from DB and persist it
         const { data } = await supabase.from('companies').select('*').limit(1).single()
         if (data) {
           localStorage.setItem(COMPANY_ID_KEY, data.id)
