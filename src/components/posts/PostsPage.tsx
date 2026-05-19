@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { useCompany } from '@/hooks/useCompany'
 import { STATUS_CONFIG } from '@/types/scheduling'
 import type { Post } from '@/types/scheduling'
-import { Eye, Check, X, Trash2, ImageIcon, Search, Filter, Loader2 } from 'lucide-react'
+import { Eye, Check, X, Trash2, ImageIcon, Search, Loader2, Sparkles } from 'lucide-react'
 
 const STATUS_FILTERS = [
   { value: '', label: 'Todos' },
@@ -77,6 +77,24 @@ export default function PostsPage() {
     setActing(a => ({ ...a, [post.id]: true }))
     await supabase.from('posts').delete().eq('id', post.id)
     setPosts(ps => ps.filter(p => p.id !== post.id))
+  }
+
+  const generateDraft = async (post: Post) => {
+    setActing(a => ({ ...a, [post.id]: true }))
+    try {
+      const res = await fetch('/api/generate-draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ post_id: post.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Erro ao gerar')
+      await load()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erro ao gerar post')
+    } finally {
+      setActing(a => ({ ...a, [post.id]: false }))
+    }
   }
 
   const filtered = search.trim()
@@ -155,12 +173,24 @@ export default function PostsPage() {
                   )}
                   {/* Hover overlay */}
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <Link
-                      href={`/preview/${post.id}`}
-                      className="w-9 h-9 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform"
-                    >
-                      <Eye size={15} className="text-[#6C3FE8]" />
-                    </Link>
+                    {post.status !== 'draft' && (
+                      <Link
+                        href={`/preview/${post.id}`}
+                        className="w-9 h-9 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform"
+                      >
+                        <Eye size={15} className="text-[#6C3FE8]" />
+                      </Link>
+                    )}
+                    {post.status === 'draft' && (
+                      <button
+                        onClick={() => generateDraft(post)}
+                        disabled={busy}
+                        className="w-9 h-9 bg-[#6C3FE8] rounded-full flex items-center justify-center hover:scale-110 transition-transform disabled:opacity-50"
+                        title="Gerar agora"
+                      >
+                        {busy ? <Loader2 size={14} className="text-white animate-spin" /> : <Sparkles size={14} className="text-white" />}
+                      </button>
+                    )}
                     {post.status === 'waiting' && (
                       <button
                         onClick={() => approve(post)}
@@ -191,6 +221,16 @@ export default function PostsPage() {
                   <p className="text-xs text-gray-400">
                     {new Date(post.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                   </p>
+                  {post.status === 'draft' && (
+                    <button
+                      onClick={() => generateDraft(post)}
+                      disabled={busy}
+                      className="w-full flex items-center justify-center gap-1 text-[10px] font-semibold py-1.5 rounded-lg bg-[#F8F7FF] text-[#6C3FE8] hover:bg-[#ede9ff] transition-colors disabled:opacity-50 mt-1"
+                    >
+                      {busy ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                      {busy ? 'Gerando...' : 'Gerar agora'}
+                    </button>
+                  )}
                   {post.status === 'waiting' && (
                     <div className="flex gap-1 pt-1">
                       <button onClick={() => approve(post)} disabled={busy} className="flex-1 text-[10px] font-semibold py-1 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors disabled:opacity-50">
