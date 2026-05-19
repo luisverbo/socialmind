@@ -7,6 +7,35 @@ const TONE_MAP = {
   promotional:  'promocional e persuasivo',
 }
 
+const ANGLE_BANK = {
+  educational: [
+    { format: 'liste os erros mais comuns que as pessoas cometem', tone: 'revelador' },
+    { format: 'tutorial passo a passo ultra prático', tone: 'didático' },
+    { format: 'desmistifique uma crença popular do nicho', tone: 'analítico' },
+    { format: 'comparação antes/depois com dados concretos', tone: 'informativo' },
+    { format: 'checklist definitivo para o tema', tone: 'direto' },
+  ],
+  motivational: [
+    { format: 'conte uma história de virada real (situação → ação → resultado)', tone: 'inspirador' },
+    { format: 'momento de decisão — o que separa quem avança de quem fica parado', tone: 'provocativo' },
+    { format: 'mindset: a crença limitante que bloqueia o resultado', tone: 'emocional' },
+    { format: 'resultado possível — mostre o destino antes do caminho', tone: 'aspiracional' },
+    { format: 'lição contraintuitiva aprendida na prática', tone: 'surpreendente' },
+  ],
+  promotional: [
+    { format: 'problema específico → solução clara → resultado esperado', tone: 'persuasivo' },
+    { format: 'antes/depois com prova social e número real', tone: 'convincente' },
+    { format: 'pergunta provocativa que expõe a dor do público', tone: 'urgente' },
+    { format: 'segredo do mercado que a concorrência não conta', tone: 'exclusivo' },
+    { format: 'benefício único e específico com dados surpreendentes', tone: 'focado' },
+  ],
+}
+
+function pickAngle(tone: 'educational' | 'motivational' | 'promotional') {
+  const angles = ANGLE_BANK[tone]
+  return angles[Math.floor(Math.random() * angles.length)]
+}
+
 function buildSystemPrompt(ctx: CompanyContext, mediaItems: MediaItem[]): string {
   const mediaSection = mediaItems.length > 0
     ? `\n\nIMAGENS DISPONÍVEIS NA BIBLIOTECA:\n${mediaItems.slice(0, 10).map(m => `- [${m.category}] ${m.url}${m.description ? ' — ' + m.description : ''}`).join('\n')}`
@@ -16,7 +45,15 @@ function buildSystemPrompt(ctx: CompanyContext, mediaItems: MediaItem[]): string
     return ctx.system_prompt + mediaSection
   }
 
-  return `Você é um copywriter sênior especializado em carrosséis virais para Instagram da empresa "${ctx.business_name}".
+  return `Você é um estrategista de conteúdo sênior especializado em Instagram, criando carrosséis virais para a empresa "${ctx.business_name}".
+
+MISSÃO: Cada carrossel gerado deve ser ÚNICO e DIFERENTE dos anteriores — mesma empresa, ângulos completamente distintos.
+
+REGRAS ANTI-REPETIÇÃO (invioláveis):
+- Nunca repita a mesma ideia, ângulo ou estrutura de título
+- Nunca comece dois posts com a mesma estrutura de frase
+- Varie o tom: às vezes provocativo, às vezes inspirador, às vezes educativo, às vezes urgente
+- Cada post deve surpreender — se parece óbvio, reescreva
 
 SOBRE O NEGÓCIO:
 - Nicho: ${ctx.niche}
@@ -136,17 +173,26 @@ function buildUserPrompt(
   theme: string,
   tone: 'educational' | 'motivational' | 'promotional',
   slidesCount: number,
-  mediaItems: MediaItem[]
+  mediaItems: MediaItem[],
+  recentTopics: string[] = []
 ): string {
   const imageUrls = mediaItems.filter(m => m.url).slice(0, 5).map(m => m.url)
   const hasImages = imageUrls.length > 0
   const seed = `${new Date().toISOString().slice(0, 16)}-${Math.random().toString(36).slice(2, 7)}`
+  const angle = pickAngle(tone)
+
+  const recentSection = recentTopics.length > 0
+    ? `\nPOSTS ANTERIORES DESTA EMPRESA — evite qualquer semelhança de ideia, título ou ângulo:\n${recentTopics.map((t, i) => `${i + 1}. ${t}`).join('\n')}\n`
+    : ''
 
   return `[ID: ${seed}]
 
 Crie um carrossel com ${slidesCount} slides sobre: "${theme}"
 Tom: ${TONE_MAP[tone]}
 Avatar: escolha UM perfil específico do público-alvo e escreva TODO o carrossel exclusivamente para essa pessoa — nunca misture perfis diferentes no mesmo carrossel.
+${recentSection}
+ÂNGULO OBRIGATÓRIO PARA ESTE POST: ${angle.format} — tom ${angle.tone}
+Use este ângulo como fio condutor de todos os slides. Não desvie dele.
 
 ${HOOK_FORMULAS}
 
@@ -188,14 +234,16 @@ export async function generateCarouselContent(
   mediaItems: MediaItem[],
   theme: string,
   tone: 'educational' | 'motivational' | 'promotional',
-  slidesCount: number
+  slidesCount: number,
+  recentTopics: string[] = []
 ): Promise<CarouselContent> {
   const systemPrompt = buildSystemPrompt(ctx, mediaItems)
-  const userPrompt   = buildUserPrompt(theme, tone, slidesCount, mediaItems)
+  const userPrompt   = buildUserPrompt(theme, tone, slidesCount, mediaItems, recentTopics)
 
   const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 2500,
+    model:       'claude-haiku-4-5-20251001',
+    max_tokens:  2500,
+    temperature: 1,
     system: [
       {
         type: 'text',

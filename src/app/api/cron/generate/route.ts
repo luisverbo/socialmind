@@ -57,6 +57,21 @@ async function generateForPost(
     .eq('company_id', companyId)
     .limit(20)
 
+  const { data: recentPosts } = await supabase
+    .from('posts')
+    .select('content')
+    .eq('company_id', companyId)
+    .neq('status', 'draft')
+    .order('created_at', { ascending: false })
+    .limit(5)
+
+  const recentTopics = (recentPosts ?? [])
+    .map(p => {
+      const slides = Array.isArray(p.content) ? p.content : []
+      return (slides[0] as { title?: string })?.title ?? ''
+    })
+    .filter(Boolean)
+
   const brandColors: BrandColors = ctx.brand_colors ?? {
     primary: '#6C3FE8',
     secondary: '#E84393',
@@ -74,7 +89,7 @@ async function generateForPost(
     throw new Error(`Limite mensal de posts atingido para empresa ${companyId}`)
   }
 
-  const carousel = await generateCarouselContent(ctx, media ?? [], theme, tone, slidesCount)
+  const carousel = await generateCarouselContent(ctx, media ?? [], theme, tone, slidesCount, recentTopics)
   const buffers = await renderAllSlides(carousel.slides, brandColors)
   const status = publishMode === 'review' ? 'waiting' : 'approved'
 
