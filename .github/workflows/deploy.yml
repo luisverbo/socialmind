@@ -23,7 +23,7 @@ jobs:
       - name: Export env vars to GitHub environment
         run: |
           if [ -f .vercel/.env.production.local ]; then
-            cat .vercel/.env.production.local >> $GITHUB_ENV
+            grep -v '^\s*#' .vercel/.env.production.local | grep -v '^\s*$' >> $GITHUB_ENV
           fi
 
       - name: Build project
