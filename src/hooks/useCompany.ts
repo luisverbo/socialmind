@@ -29,14 +29,16 @@ export function useCompany() {
       return
     }
     // Fallback: auto-detect first company from DB and persist it
-    supabase.from('companies').select('*').limit(1).single().then(({ data }) => {
-      if (data) {
-        localStorage.setItem(COMPANY_ID_KEY, data.id)
-        setCompanyId(data.id)
-        setCompany(data)
-      }
-      setLoading(false)
-    })
+    supabase.from('companies').select('*').limit(1).single()
+      .then(({ data }) => {
+        if (data) {
+          localStorage.setItem(COMPANY_ID_KEY, data.id)
+          setCompanyId(data.id)
+          setCompany(data)
+        }
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
   }, [fetchCompany])
 
   const refresh = useCallback(() => {
