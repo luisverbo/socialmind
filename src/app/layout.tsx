@@ -5,6 +5,8 @@ import { AuthProvider } from '@/contexts/AuthContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'SocialMind — Automação de Instagram com IA',
   description: 'Configure sua conta e comece a automatizar seus carrosséis no Instagram.',
