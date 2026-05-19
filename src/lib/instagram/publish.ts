@@ -6,9 +6,9 @@ import {
 } from './client'
 import { getToken } from './tokens'
 
-// Keep each attempt well under Vercel's 60s function limit
-const TIMEOUT_MS  = 20_000
-const MAX_RETRIES = 1   // 2 total attempts × 20s + 2s delay = 42s max
+// No per-attempt timeout — Vercel's maxDuration (55s) handles the overall limit.
+// Zero retries: a single clean attempt fits within the 55s window.
+const MAX_RETRIES = 0
 
 function adminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -16,20 +16,6 @@ function adminClient() {
   return createClient(url, key)
 }
 
-async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  let timer: ReturnType<typeof setTimeout>
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`Timeout de ${ms / 1000}s excedido`)), ms)
-  })
-  try {
-    const result = await Promise.race([promise, timeout])
-    clearTimeout(timer!)
-    return result
-  } catch (e) {
-    clearTimeout(timer!)
-    throw e
-  }
-}
 
 async function runPublish(postId: string): Promise<string> {
   const supabase = adminClient()
@@ -55,13 +41,11 @@ async function runPublish(postId: string): Promise<string> {
 
   const { access_token_raw: accessToken, instagram_account_id: igUserId } = token
 
-  // 3. Create individual image containers
+  // 3. Create individual image containers (sequential, no delay needed)
   const childIds: string[] = []
   for (const url of images) {
     const id = await createImageContainer(igUserId, url, accessToken)
     childIds.push(id)
-    // Small delay to avoid rate limits
-    await new Promise(r => setTimeout(r, 500))
   }
 
   // 4. Create carousel container
@@ -102,7 +86,7 @@ export async function publishToInstagram(postId: string): Promise<string> {
 
   for (let attempt = 1; attempt <= MAX_RETRIES + 1; attempt++) {
     try {
-      return await withTimeout(runPublish(postId), TIMEOUT_MS)
+      return await runPublish(postId)
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err))
       if (attempt <= MAX_RETRIES) {
