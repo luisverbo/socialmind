@@ -23,9 +23,20 @@ export function useCompany() {
 
   useEffect(() => {
     const id = localStorage.getItem(COMPANY_ID_KEY)
-    if (!id) { setLoading(false); return }
-    setCompanyId(id)
-    fetchCompany(id)
+    if (id) {
+      setCompanyId(id)
+      fetchCompany(id)
+      return
+    }
+    // Fallback: auto-detect first company from DB and persist it
+    supabase.from('companies').select('*').limit(1).single().then(({ data }) => {
+      if (data) {
+        localStorage.setItem(COMPANY_ID_KEY, data.id)
+        setCompanyId(data.id)
+        setCompany(data)
+      }
+      setLoading(false)
+    })
   }, [fetchCompany])
 
   const refresh = useCallback(() => {
