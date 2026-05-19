@@ -3,6 +3,7 @@ import {
   createImageContainer,
   createCarouselContainer,
   publishContainer,
+  waitForContainer,
 } from './client'
 import { getToken } from './tokens'
 
@@ -41,12 +42,13 @@ async function runPublish(postId: string): Promise<string> {
 
   const { access_token_raw: accessToken, instagram_account_id: igUserId } = token
 
-  // 3. Create individual image containers (sequential, no delay needed)
+  // 3. Create individual image containers then wait until each is FINISHED
   const childIds: string[] = []
   for (const url of images) {
     const id = await createImageContainer(igUserId, url, accessToken)
     childIds.push(id)
   }
+  await Promise.all(childIds.map(id => waitForContainer(id, accessToken, 30_000)))
 
   // 4. Create carousel container
   const caption    = post.caption ?? ''

@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { publishToInstagram } from '@/lib/instagram/publish'
 
 export const runtime = 'nodejs'
-export const maxDuration = 55
+export const maxDuration = 60
 
 function adminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!

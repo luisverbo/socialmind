@@ -107,6 +107,25 @@ export async function createImageContainer(
   return data.id as string
 }
 
+/** Poll a media container until its status_code is FINISHED (or ERROR/timeout). */
+export async function waitForContainer(
+  containerId: string,
+  token: string,
+  maxWaitMs = 30_000
+): Promise<void> {
+  const deadline = Date.now() + maxWaitMs
+  while (Date.now() < deadline) {
+    const params = new URLSearchParams({ fields: 'status_code', access_token: token })
+    const res  = await fetch(`${GRAPH_V}/${containerId}?${params}`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error?.message ?? `Erro ao verificar status do container ${containerId}`)
+    if (data.status_code === 'FINISHED') return
+    if (data.status_code === 'ERROR') throw new Error(`Container ${containerId} falhou no processamento`)
+    await new Promise(r => setTimeout(r, 3000))
+  }
+  throw new Error(`Container ${containerId} não ficou pronto em ${maxWaitMs / 1000}s`)
+}
+
 /** Create a carousel container from individual item IDs. */
 export async function createCarouselContainer(
   igUserId: string,
