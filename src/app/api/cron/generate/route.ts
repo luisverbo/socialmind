@@ -63,6 +63,17 @@ async function generateForPost(
     accent: '#A855F7',
   }
 
+  // Check monthly limit before generating
+  const { data: company } = await supabase
+    .from('companies')
+    .select('posts_used_this_month, posts_limit')
+    .eq('id', companyId)
+    .single()
+
+  if (company && company.posts_used_this_month >= company.posts_limit) {
+    throw new Error(`Limite mensal de posts atingido para empresa ${companyId}`)
+  }
+
   const carousel = await generateCarouselContent(ctx, media ?? [], theme, tone, slidesCount)
   const buffers = await renderAllSlides(carousel.slides, brandColors)
   const status = publishMode === 'review' ? 'waiting' : 'approved'
@@ -84,6 +95,13 @@ async function generateForPost(
   )
 
   await supabase.from('posts').update({ slides_images: imageUrls }).eq('id', postId)
+
+  // Increment usage counter after successful generation
+  try {
+    await supabase.rpc('increment_posts_used', { p_company_id: companyId })
+  } catch (e) {
+    console.error('[cron/generate] increment_posts_used falhou (não fatal):', e)
+  }
 
   await supabase.from('notifications').insert({
     company_id: companyId,

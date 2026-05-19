@@ -34,6 +34,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Post não encontrado' }, { status: 404 })
     }
 
+    const MAX_REGENS = 3
+    if ((post.regen_count ?? 0) >= MAX_REGENS) {
+      return NextResponse.json(
+        { error: `Limite de ${MAX_REGENS} regenerações por post atingido.` },
+        { status: 402 }
+      )
+    }
+
     const companyId: string = post.company_id
 
     const [{ data: ctx }, { data: media }] = await Promise.all([
@@ -81,9 +89,16 @@ export async function POST(req: NextRequest) {
     await supabase.from('posts').update({
       slides_images: currentImages,
       content: carousel.slides,
+      regen_count: (post.regen_count ?? 0) + 1,
     }).eq('id', post_id)
 
-    return NextResponse.json({ success: true, url: newUrl, slide: slideData })
+    return NextResponse.json({
+      success: true,
+      url: newUrl,
+      slide: slideData,
+      regens_used: (post.regen_count ?? 0) + 1,
+      regens_left: MAX_REGENS - ((post.regen_count ?? 0) + 1),
+    })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Erro interno'
     return NextResponse.json({ error: message }, { status: 500 })

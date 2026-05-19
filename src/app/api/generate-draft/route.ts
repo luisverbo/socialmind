@@ -37,6 +37,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Post já foi gerado' }, { status: 400 })
     }
 
+    // Check monthly limit before generating
+    const { data: company } = await supabase
+      .from('companies')
+      .select('posts_used_this_month, posts_limit')
+      .eq('id', post.company_id)
+      .single()
+
+    if (company && company.posts_used_this_month >= company.posts_limit) {
+      return NextResponse.json(
+        { error: `Limite mensal atingido (${company.posts_limit} posts). Aguarde a renovação ou faça upgrade do plano.` },
+        { status: 402 }
+      )
+    }
+
     // Get schedule info for theme/tone/slides
     let theme = 'Conteúdo geral'
     let tone: 'educational' | 'motivational' | 'promotional' = 'educational'
@@ -88,7 +102,6 @@ export async function POST(req: NextRequest) {
 
       const status = publishMode === 'review' ? 'waiting' : 'approved'
 
-      // Update the existing draft post
       await supabase.from('posts').update({
         content: carousel.slides,
         slides_html: carousel.slides.map(() => null),
@@ -97,7 +110,6 @@ export async function POST(req: NextRequest) {
         status,
       }).eq('id', post_id)
 
-      // Upload slides
       const imageUrls = await Promise.all(
         buffers.map(async (buf, i) => {
           const path = `slides/${post.company_id}/${post_id}/slide-${i + 1}.png`
@@ -107,6 +119,13 @@ export async function POST(req: NextRequest) {
       )
 
       await supabase.from('posts').update({ slides_images: imageUrls }).eq('id', post_id)
+
+      // Increment usage counter after successful generation
+      try {
+        await supabase.rpc('increment_posts_used', { p_company_id: post.company_id })
+      } catch (e) {
+        console.error('[generate-draft] increment_posts_used falhou (não fatal):', e)
+      }
 
       await supabase.from('notifications').insert({
         company_id: post.company_id,
