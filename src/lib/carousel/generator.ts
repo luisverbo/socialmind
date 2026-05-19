@@ -214,7 +214,13 @@ export async function generateCarouselContent(
     .join('')
     .trim()
 
-  const json = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+  // Extract JSON robustly — find first { and last } regardless of markdown wrapping
+  const start = text.indexOf('{')
+  const end   = text.lastIndexOf('}')
+  if (start === -1 || end === -1) {
+    throw new Error(`Modelo não retornou JSON: ${text.slice(0, 200)}`)
+  }
+  const json = text.slice(start, end + 1)
 
   let parsed: CarouselContent
   try {
