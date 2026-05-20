@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { CheckCircle, XCircle, Edit3, Save, X, CheckSquare, Clock, ChevronLeft, ChevronRight, Expand, ExternalLink, Trash2, RotateCcw } from 'lucide-react'
+import { CheckCircle, XCircle, Edit3, Save, X, CheckSquare, Clock, ChevronLeft, ChevronRight, Expand, ExternalLink, Trash2, RotateCcw, Send } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import type { Post } from '@/types/scheduling'
@@ -97,6 +97,7 @@ function PostCard({
   onReject,
   onDelete,
   onUndoApprove,
+  onPublishNow,
   onPreview,
   isApproved,
 }: {
@@ -105,6 +106,7 @@ function PostCard({
   onReject?: () => void
   onDelete: () => void
   onUndoApprove?: () => void
+  onPublishNow?: () => void
   onPreview: (index: number) => void
   isApproved: boolean
 }) {
@@ -255,15 +257,25 @@ function PostCard({
       {/* Action buttons */}
       <div className="flex gap-2 px-4 pb-4 pt-2 mt-auto">
         {isApproved ? (
-          // Approved post: undo + delete
+          // Approved post: publish now + undo + edit + delete
           <>
+            {onPublishNow && (
+              <button
+                onClick={() => handleAction(onPublishNow)}
+                disabled={processing}
+                className="flex-1 flex items-center justify-center gap-1.5 bg-[#6C3FE8] hover:bg-[#5830cc] text-white text-xs font-semibold py-2.5 rounded-xl transition-all disabled:opacity-50"
+              >
+                {processing ? <div className="w-3 h-3 spinner" /> : <Send size={13} />}
+                Publicar agora
+              </button>
+            )}
             <button
               onClick={() => handleAction(onUndoApprove!)}
               disabled={processing}
-              className="flex-1 flex items-center justify-center gap-1.5 border border-amber-200 text-amber-600 hover:bg-amber-50 text-xs font-semibold py-2.5 rounded-xl transition-all disabled:opacity-50"
+              className="w-10 flex items-center justify-center border border-amber-200 text-amber-500 hover:bg-amber-50 rounded-xl transition-all disabled:opacity-50"
+              title="Desfazer aprovação"
             >
-              {processing ? <div className="w-3 h-3 spinner" /> : <RotateCcw size={13} />}
-              Desfazer aprovação
+              <RotateCcw size={14} />
             </button>
             <button
               onClick={() => setEditingCaption(true)}
@@ -354,8 +366,31 @@ export default function ApprovalQueue({ companyId, onCountChange }: Props) {
 
   useEffect(() => { fetchPosts() }, [fetchPosts])
 
-  const approve = async (id: string) => {
+  const approve = async (id: string, scheduledFor: string | null) => {
     await supabase.from('posts').update({ status: 'approved', approved_at: new Date().toISOString() }).eq('id', id)
+    // If the post is already due (past scheduled time or no date) → publish immediately
+    const isDue = !scheduledFor || new Date(scheduledFor) <= new Date()
+    if (isDue) {
+      publishNow(id)   // fire-and-forget — UI will refresh via fetchPosts after
+    } else {
+      fetchPosts()
+    }
+  }
+
+  const publishNow = async (id: string) => {
+    try {
+      const res = await fetch('/api/publish-now', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ post_id: id }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        console.error('[ApprovalQueue] publishNow falhou:', err)
+      }
+    } catch (e) {
+      console.error('[ApprovalQueue] publishNow erro:', e)
+    }
     fetchPosts()
   }
 
@@ -445,7 +480,7 @@ export default function ApprovalQueue({ companyId, onCountChange }: Props) {
                 key={post.id}
                 post={post}
                 isApproved={false}
-                onApprove={() => approve(post.id)}
+                onApprove={() => approve(post.id, post.scheduled_for)}
                 onReject={() => reject(post.id)}
                 onDelete={() => deletePost(post.id)}
                 onPreview={(i) => setPreviewModal({ postId: post.id, images: post.slides_images, index: i })}
@@ -474,6 +509,7 @@ export default function ApprovalQueue({ companyId, onCountChange }: Props) {
                 isApproved={true}
                 onDelete={() => deletePost(post.id)}
                 onUndoApprove={() => undoApprove(post.id)}
+                onPublishNow={() => publishNow(post.id)}
                 onPreview={(i) => setPreviewModal({ postId: post.id, images: post.slides_images, index: i })}
               />
             ))}
