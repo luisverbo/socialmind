@@ -8,6 +8,14 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;')
 }
 
+function logoHtml(logoUrl: string | undefined, dark = false): string {
+  if (!logoUrl) return ''
+  const bg = dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.04)'
+  return `<div style="position:absolute;bottom:36px;right:40px;width:72px;height:72px;border-radius:14px;background:${bg};padding:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+    <img src="${escapeHtml(logoUrl)}" style="max-width:100%;max-height:100%;object-fit:contain;" />
+  </div>`
+}
+
 function baseStyles(colors: BrandColors): string {
   return `
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -29,7 +37,7 @@ function baseStyles(colors: BrandColors): string {
   `
 }
 
-function coverTemplate(slide: SlideContent, colors: BrandColors): string {
+function coverTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: string): string {
   const gradient = `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
   <style>
@@ -47,7 +55,7 @@ function coverTemplate(slide: SlideContent, colors: BrandColors): string {
       letter-spacing: -2px; margin-bottom: 40px;
     }
     .subtitle { font-size: 40px; color: rgba(255,255,255,.85); font-weight: 400; line-height: 1.4; max-width: 800px; }
-    .swipe { position: absolute; bottom: 60px; right: 80px; display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,.7); font-size: 24px; }
+    .swipe { position: absolute; bottom: 60px; left: 80px; display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,.7); font-size: 24px; }
     .swipe svg { opacity: .7; }
     .decorator {
       position: absolute; width: 350px; height: 350px; border-radius: 50%;
@@ -61,6 +69,7 @@ function coverTemplate(slide: SlideContent, colors: BrandColors): string {
   <div class="slide">
     <div class="decorator"></div>
     <div class="decorator2"></div>
+    ${logoHtml(logoUrl, true)}
     ${slide.subtitle ? `<div class="badge">${escapeHtml(slide.subtitle)}</div>` : ''}
     <h1>${escapeHtml(slide.title)}</h1>
     ${slide.body ? `<p class="subtitle">${escapeHtml(slide.body)}</p>` : ''}
@@ -72,7 +81,7 @@ function coverTemplate(slide: SlideContent, colors: BrandColors): string {
   </body></html>`
 }
 
-function contentTemplate(slide: SlideContent, colors: BrandColors, slideNum: number, total: number): string {
+function contentTemplate(slide: SlideContent, colors: BrandColors, slideNum: number, total: number, logoUrl?: string): string {
   const bullets = slide.bullets ?? []
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
   <style>
@@ -96,16 +105,13 @@ function contentTemplate(slide: SlideContent, colors: BrandColors, slideNum: num
     }
     .footer { display: flex; align-items: center; justify-content: space-between; }
     .footer-text { font-size: 24px; color: #9CA3AF; }
-    .progress {
-      display: flex; gap: 8px;
-    }
-    .progress-dot {
-      width: 10px; height: 10px; border-radius: 50%; background: #E5E7EB;
-    }
+    .progress { display: flex; gap: 8px; }
+    .progress-dot { width: 10px; height: 10px; border-radius: 50%; background: #E5E7EB; }
     .progress-dot.active { background: ${colors.primary}; }
   </style></head><body>
   <div class="top-bar"></div>
   <div class="slide">
+    ${logoHtml(logoUrl, false)}
     <div>
       <p class="counter"><span>${slideNum}</span> / ${total}</p>
       <h2>${escapeHtml(slide.title)}</h2>
@@ -122,7 +128,7 @@ function contentTemplate(slide: SlideContent, colors: BrandColors, slideNum: num
   </body></html>`
 }
 
-function ctaTemplate(slide: SlideContent, colors: BrandColors): string {
+function ctaTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: string): string {
   const gradient = `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
   <style>
@@ -151,6 +157,7 @@ function ctaTemplate(slide: SlideContent, colors: BrandColors): string {
   </style></head><body>
   <div class="slide">
     <div class="blob"></div>
+    ${logoHtml(logoUrl, false)}
     <div class="icon-wrap">
       <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
@@ -164,9 +171,9 @@ function ctaTemplate(slide: SlideContent, colors: BrandColors): string {
   </body></html>`
 }
 
-function imageTemplate(slide: SlideContent, colors: BrandColors): string {
+function imageTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: string): string {
   const gradient = `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`
-  const overlay = slide.imageUrl
+  const overlay  = slide.imageUrl
     ? `linear-gradient(to bottom, rgba(0,0,0,.15) 0%, rgba(0,0,0,.55) 100%)`
     : gradient
   const bg = slide.imageUrl ? `url('${slide.imageUrl}')` : gradient
@@ -189,6 +196,7 @@ function imageTemplate(slide: SlideContent, colors: BrandColors): string {
     .body { font-size: 36px; color: rgba(255,255,255,.85); line-height: 1.5; max-width: 900px; }
   </style></head><body>
   <div class="slide">
+    ${logoHtml(logoUrl, true)}
     <div class="content">
       ${slide.subtitle ? `<div class="tag">${escapeHtml(slide.subtitle)}</div>` : ''}
       <h2>${escapeHtml(slide.title)}</h2>
@@ -202,17 +210,18 @@ export function buildSlideHtml(
   slide: SlideContent,
   colors: BrandColors,
   slideIndex: number,
-  total: number
+  total: number,
+  logoUrl?: string
 ): string {
   switch (slide.type) {
     case 'cover':
-      return coverTemplate(slide, colors)
+      return coverTemplate(slide, colors, logoUrl)
     case 'cta':
-      return ctaTemplate(slide, colors)
+      return ctaTemplate(slide, colors, logoUrl)
     case 'image':
-      return imageTemplate(slide, colors)
+      return imageTemplate(slide, colors, logoUrl)
     case 'content':
     default:
-      return contentTemplate(slide, colors, slideIndex, total)
+      return contentTemplate(slide, colors, slideIndex, total, logoUrl)
   }
 }

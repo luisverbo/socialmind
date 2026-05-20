@@ -78,8 +78,10 @@ export async function generateForPost(
     throw new Error(`Limite mensal de posts atingido para empresa ${companyId}`)
   }
 
+  const logoUrl: string | undefined = ctx.logo_url ?? undefined
+
   const carousel = await generateCarouselContent(ctx, media ?? [], theme, tone, slidesCount, recentTopics)
-  const buffers  = await renderAllSlides(carousel.slides, brandColors)
+  const buffers  = await renderAllSlides(carousel.slides, brandColors, logoUrl)
   const status   = publishMode === 'review' ? 'waiting' : 'approved'
 
   await supabase.from('posts').update({

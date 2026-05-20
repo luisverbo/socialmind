@@ -6,6 +6,7 @@ import { useCompany } from '@/hooks/useCompany'
 import InstagramConnect from './InstagramConnect'
 import RecentPublications from './RecentPublications'
 import BrandSettings from './BrandSettings'
+import BusinessSettings from './BusinessSettings'
 import { Settings, BarChart3, Zap } from 'lucide-react'
 import type { Company } from '@/types/scheduling'
 
@@ -61,6 +62,12 @@ export default function SettingsPage() {
           <p className="text-xs text-gray-400">Gerencie sua conta e integrações</p>
         </div>
       </div>
+
+      {/* Business info */}
+      <section>
+        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Sobre o negócio</h2>
+        <BusinessSettings />
+      </section>
 
       {/* Brand identity */}
       <section>

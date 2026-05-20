@@ -113,8 +113,10 @@ export async function POST(req: NextRequest) {
       }
 
       const finalTheme = (typeof custom_topic === 'string' && custom_topic.trim()) ? custom_topic.trim() : theme
+      const logoUrl: string | undefined = ctx.logo_url ?? undefined
+
       const carousel = await generateCarouselContent(ctx, media ?? [], finalTheme, tone, slidesCount, recentTopics)
-      const buffers = await renderAllSlides(carousel.slides, brandColors)
+      const buffers = await renderAllSlides(carousel.slides, brandColors, logoUrl)
 
       const status = publishMode === 'review' ? 'waiting' : 'approved'
 

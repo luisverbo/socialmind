@@ -171,15 +171,39 @@ export default function ApprovalQueue({ companyId, onCountChange }: Props) {
               </div>
 
               {/* Slides preview */}
-              {post.content && post.content.length > 0 ? (
+              {post.slides_images && post.slides_images.length > 0 ? (
+                <div className="px-5 py-4">
+                  <p className="text-xs text-gray-400 font-medium mb-3">
+                    Preview dos slides ({post.slides_images.length})
+                  </p>
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {post.slides_images.map((url, i) => (
+                      <div
+                        key={i}
+                        className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border border-gray-200 bg-gray-100 relative"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={url}
+                          alt={`Slide ${i + 1}`}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                        <span className="absolute bottom-1 right-1.5 text-[10px] font-bold text-white drop-shadow">
+                          {i + 1}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : post.content && post.content.length > 0 ? (
                 <div className="px-5 py-4">
                   <p className="text-xs text-gray-400 font-medium mb-3">Conteúdo dos slides</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto">
                     {post.content.map((slide, i) => (
                       <div key={i} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                         <p className="text-xs text-gray-400 font-medium mb-1">Slide {i + 1}</p>
-                        {slide.title && <p className="text-sm font-semibold text-[#1A1A2E]">{slide.title}</p>}
-                        {slide.text && <p className="text-xs text-gray-500 mt-1 line-clamp-3">{slide.text}</p>}
+                        {slide.title && <p className="text-sm font-semibold text-[#1A1A2E] line-clamp-2">{slide.title}</p>}
                       </div>
                     ))}
                   </div>

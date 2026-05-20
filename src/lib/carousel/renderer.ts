@@ -86,9 +86,10 @@ export async function renderSlide(
   slide: SlideContent,
   colors: BrandColors,
   slideIndex: number,
-  total: number
+  total: number,
+  logoUrl?: string
 ): Promise<Buffer> {
-  const html = buildSlideHtml(slide, colors, slideIndex, total)
+  const html = buildSlideHtml(slide, colors, slideIndex, total, logoUrl)
 
   if (RENDERER_URL && RENDERER_KEY) {
     try {
@@ -104,9 +105,10 @@ export async function renderSlide(
 
 export async function renderAllSlides(
   slides: SlideContent[],
-  colors: BrandColors
+  colors: BrandColors,
+  logoUrl?: string
 ): Promise<Buffer[]> {
   return Promise.all(
-    slides.map((slide, i) => renderSlide(slide, colors, i + 1, slides.length))
+    slides.map((slide, i) => renderSlide(slide, colors, i + 1, slides.length, logoUrl))
   )
 }

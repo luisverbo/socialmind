@@ -80,9 +80,20 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
 
       const { data: conflict } = await conflictQuery.limit(1)
       if (conflict && conflict.length > 0) {
-        setErrors({ global: 'Já existe um agendamento neste dia e horário.' })
-        setStep('form')
-        return
+        // Only block if the conflicting schedule still has active future posts
+        const { data: activePosts } = await supabase
+          .from('posts')
+          .select('id')
+          .eq('schedule_id', conflict[0].id)
+          .in('status', ['draft', 'waiting', 'approved'])
+          .gte('scheduled_for', new Date().toISOString())
+          .limit(1)
+
+        if (activePosts && activePosts.length > 0) {
+          setErrors({ global: 'Já existe um agendamento ativo neste dia e horário.' })
+          setStep('form')
+          return
+        }
       }
 
       const schedulePayload: Record<string, unknown> = {
