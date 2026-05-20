@@ -11,30 +11,26 @@ const TONE_OPTS = [
   { value: 'promotional',  label: 'Promocional',  emoji: '🛍️' },
 ] as const
 
-const SLIDES_OPTS = [5, 7, 10] as const
-
 type Tone = 'educational' | 'motivational' | 'promotional'
 
 interface Theme {
-  id:          string
-  theme_name:  string
-  tone:        Tone
-  slides_count: number
+  id:         string
+  theme_name: string
+  tone:       Tone
 }
 
 interface EditState {
-  theme_name:  string
-  tone:        Tone
-  slides_count: number
+  theme_name: string
+  tone:       Tone
 }
 
-const emptyEdit = (): EditState => ({ theme_name: '', tone: 'educational', slides_count: 7 })
+const emptyEdit = (): EditState => ({ theme_name: '', tone: 'educational' })
 
 export default function ContentThemesSettings() {
   const { companyId } = useCompany()
   const [themes,    setThemes]    = useState<Theme[]>([])
   const [loading,   setLoading]   = useState(true)
-  const [editingId, setEditingId] = useState<string | null>(null)   // id being edited, or 'new'
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [editState, setEditState] = useState<EditState>(emptyEdit())
   const [saving,    setSaving]    = useState(false)
   const [deleteId,  setDeleteId]  = useState<string | null>(null)
@@ -44,7 +40,7 @@ export default function ContentThemesSettings() {
     setLoading(true)
     const { data } = await supabase
       .from('content_themes')
-      .select('id, theme_name, tone, slides_count')
+      .select('id, theme_name, tone')
       .eq('company_id', companyId)
       .order('created_at', { ascending: true })
     setThemes((data ?? []) as Theme[])
@@ -61,7 +57,7 @@ export default function ContentThemesSettings() {
 
   const startEdit = (t: Theme) => {
     setEditingId(t.id)
-    setEditState({ theme_name: t.theme_name, tone: t.tone, slides_count: t.slides_count })
+    setEditState({ theme_name: t.theme_name, tone: t.tone })
     setDeleteId(null)
   }
 
@@ -73,16 +69,15 @@ export default function ContentThemesSettings() {
 
     if (editingId === 'new') {
       await supabase.from('content_themes').insert({
-        company_id:  companyId,
-        theme_name:  editState.theme_name.trim(),
-        tone:        editState.tone,
-        slides_count: editState.slides_count,
+        company_id: companyId,
+        theme_name: editState.theme_name.trim(),
+        tone:       editState.tone,
+        slides_count: 7, // default, not user-facing
       })
     } else {
       await supabase.from('content_themes').update({
-        theme_name:  editState.theme_name.trim(),
-        tone:        editState.tone,
-        slides_count: editState.slides_count,
+        theme_name: editState.theme_name.trim(),
+        tone:       editState.tone,
       }).eq('id', editingId!)
     }
 
@@ -170,9 +165,7 @@ export default function ContentThemesSettings() {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-[#1A1A2E] truncate">{theme.theme_name}</p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {TONE_MAP[theme.tone]?.label} · {theme.slides_count} slides
-                </p>
+                <p className="text-xs text-gray-400 mt-0.5">{TONE_MAP[theme.tone]?.label}</p>
               </div>
 
               {/* Actions */}
@@ -229,14 +222,7 @@ export default function ContentThemesSettings() {
 
 // ── Inline form (shared by new + edit) ──────────────────────────────────────
 
-function ThemeForm({
-  state,
-  onChange,
-  onSave,
-  onCancel,
-  saving,
-  isNew = false,
-}: {
+function ThemeForm({ state, onChange, onSave, onCancel, saving, isNew = false }: {
   state:    EditState
   onChange: (s: EditState) => void
   onSave:   () => void
@@ -279,27 +265,6 @@ function ThemeForm({
             {opt.emoji} {opt.label}
           </button>
         ))}
-      </div>
-
-      {/* Slides count */}
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-gray-500 flex-shrink-0">Slides padrão:</span>
-        <div className="flex gap-1.5">
-          {SLIDES_OPTS.map(n => (
-            <button
-              key={n}
-              type="button"
-              onClick={() => set({ slides_count: n })}
-              className={`w-9 h-9 rounded-lg border text-xs font-bold transition-all ${
-                state.slides_count === n
-                  ? 'bg-[#F8F7FF] border-[#6C3FE8] text-[#6C3FE8]'
-                  : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'
-              }`}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Actions */}
