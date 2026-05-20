@@ -16,7 +16,7 @@ function adminClient() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { post_id } = await req.json()
+    const { post_id, custom_topic } = await req.json()
     if (!post_id) {
       return NextResponse.json({ error: 'post_id é obrigatório' }, { status: 400 })
     }
@@ -112,7 +112,8 @@ export async function POST(req: NextRequest) {
         accent: '#A855F7',
       }
 
-      const carousel = await generateCarouselContent(ctx, media ?? [], theme, tone, slidesCount, recentTopics)
+      const finalTheme = (typeof custom_topic === 'string' && custom_topic.trim()) ? custom_topic.trim() : theme
+      const carousel = await generateCarouselContent(ctx, media ?? [], finalTheme, tone, slidesCount, recentTopics)
       const buffers = await renderAllSlides(carousel.slides, brandColors)
 
       const status = publishMode === 'review' ? 'waiting' : 'approved'

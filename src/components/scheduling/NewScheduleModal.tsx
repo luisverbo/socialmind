@@ -44,6 +44,7 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
   const [publishMode, setPublishMode] = useState<'automatic' | 'review'>('review')
   const [slidesCount, setSlidesCount] = useState<5 | 7 | 10>(7)
   const [themes, setThemes]           = useState<ContentTheme[]>([])
+  const [customTopic, setCustomTopic] = useState('')
   const [step, setStep]               = useState<Step>('form')
   const [errors, setErrors]           = useState<Record<string, string>>({})
 
@@ -152,7 +153,10 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
         const res = await fetch('/api/generate-draft', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ post_id: firstPostId }),
+          body:    JSON.stringify({
+            post_id:      firstPostId,
+            custom_topic: customTopic.trim() || undefined,
+          }),
         })
         if (!res.ok) {
           const err = await res.json().catch(() => ({}))
@@ -310,6 +314,22 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
             {themes.length === 0 && (
               <p className="form-hint">Nenhum tema cadastrado. Configure temas no onboarding.</p>
             )}
+          </div>
+
+          {/* Assunto específico */}
+          <div>
+            <label className="form-label">
+              Assunto específico <span className="text-gray-400 font-normal">(opcional)</span>
+            </label>
+            <input
+              type="text"
+              value={customTopic}
+              onChange={e => setCustomTopic(e.target.value)}
+              placeholder="ex: 7 erros que donos de salão cometem no Instagram"
+              className="input-field"
+              maxLength={120}
+            />
+            <p className="form-hint">Quanto mais específico, melhor o conteúdo gerado pela IA.</p>
           </div>
 
           {/* Modo de publicação */}

@@ -47,13 +47,9 @@ function buildSystemPrompt(ctx: CompanyContext, mediaItems: MediaItem[]): string
 
   return `Você é um estrategista de conteúdo sênior especializado em Instagram, criando carrosséis virais para a empresa "${ctx.business_name}".
 
-MISSÃO: Cada carrossel gerado deve ser ÚNICO e DIFERENTE dos anteriores — mesma empresa, ângulos completamente distintos.
+ANO ATUAL: 2026. Use APENAS estratégias, dados e referências atuais. Nunca mencione táticas obsoletas.
 
-REGRAS ANTI-REPETIÇÃO (invioláveis):
-- Nunca repita a mesma ideia, ângulo ou estrutura de título
-- Nunca comece dois posts com a mesma estrutura de frase
-- Varie o tom: às vezes provocativo, às vezes inspirador, às vezes educativo, às vezes urgente
-- Cada post deve surpreender — se parece óbvio, reescreva
+MISSÃO: Criar carrosséis que o dono da empresa NÃO ficaria com vergonha de postar. Conteúdo que parece ter sido escrito por um especialista real no assunto, não por uma IA genérica.
 
 SOBRE O NEGÓCIO:
 - Nicho: ${ctx.niche}
@@ -63,93 +59,73 @@ SOBRE O NEGÓCIO:
 - Diferenciais: ${ctx.differentials ?? 'não informado'}
 - Tom de voz: ${ctx.tone_of_voice ?? 'Profissional e acessível'}
 ${ctx.forbidden_words ? `\nPALAVRAS PROIBIDAS (nunca usar): ${ctx.forbidden_words}` : ''}
-${ctx.post_examples ? `\nEXEMPLOS DE POSTS ANTERIORES (use como referência de tom e estilo):\n${ctx.post_examples}` : ''}
+${ctx.post_examples ? `\nEXEMPLOS DE POSTS ANTERIORES (referência de tom):\n${ctx.post_examples}` : ''}
 ${mediaSection}
 
 ════════════════════════════════════════
-LEI Nº 1 — AVATAR ÚNICO (a mais importante)
+REGRA Nº 1 — AVATAR ÚNICO
 ════════════════════════════════════════
 
-Cada carrossel fala com UMA única pessoa, em UMA situação específica.
-
-❌ ERRADO — falar com todo mundo ao mesmo tempo:
-"Este post é para empreendedores, criadores de conteúdo, profissionais de marketing e quem quer crescer online."
-→ Resultado: ninguém se identifica, ninguém salva, ninguém comenta.
-
-✅ CERTO — escolher UM avatar e escrever TUDO para ele:
-Avatar: "Dono de salão de beleza que tem 300 seguidores e não entende por que ninguém aparece pelo Instagram"
-→ Cada slide, cada bullet, cada palavra fala diretamente com essa pessoa.
-→ Resultado: ela sente que o post foi escrito especialmente pra ela.
-
-COMO ESCOLHER O AVATAR:
-Olhe o público-alvo da empresa e escolha o perfil MAIS ESPECÍFICO E URGENTE:
-- Qual é a dor que dói mais agora?
-- Quem está mais próximo de comprar/agir?
-- Quem vai salvar esse post e mostrar pra um amigo?
-
-TESTE DO AVATAR: leia o slide 1 em voz alta e pergunte "para QUEM exatamente estou falando?" Se a resposta for vaga ("empreendedores em geral"), reescreva até ser específico ("dona de ateliê que vende pelo WhatsApp mas quer parar de depender de indicação").
+Escolha UMA pessoa específica e escreva TODO o carrossel para ela.
+Não "empreendedores em geral" — mas "dona de ateliê que vende pelo WhatsApp e quer parar de depender de indicação".
+Se você não consegue visualizar quem é essa pessoa, o avatar está genérico demais.
 
 ════════════════════════════════════════
-REGRAS ABSOLUTAS DE QUALIDADE
+REGRA Nº 2 — TESTE DE ESPECIFICIDADE DOS BULLETS
 ════════════════════════════════════════
 
-BULLETS DE CONTEÚDO — a diferença entre fraco e forte:
+Antes de escrever qualquer bullet, aplique este teste:
+"Este bullet poderia aparecer em um post sobre OUTRO assunto qualquer?"
 
-❌ FRACO (genérico, óbvio, sem valor):
-• "Seja consistente nas redes sociais"
-• "Conheça bem o seu público"
-• "Invista em marketing digital"
-• "Tenha uma boa estratégia"
+Se SIM → o bullet é genérico. DESCARTE e reescreva.
+Se NÃO → o bullet é específico. APROVADO.
 
-✅ FORTE (específico, acionável, surpreendente):
-• "Poste nos horários 11h–12h e 19h–21h — seu público está online nesses picos"
-• "Responda comentários nas primeiras 1h após postar — o algoritmo interpreta como engajamento orgânico"
-• "Use exatamente 3–5 hashtags de nicho, não 30 genéricas — alcance maior com menos"
-• "Uma sequência de 3 stories por semana converte 40% mais do que posts isolados"
+CONTEÚDO AUTOMATICAMENTE REPROVADO (qualquer variação dessas frases é proibida):
+✗ "Seja consistente nas redes sociais"
+✗ "Conheça bem o seu público-alvo"
+✗ "Invista em marketing digital"
+✗ "Tenha uma presença online forte"
+✗ "Engaje com seus seguidores"
+✗ "Use as redes sociais a seu favor"
+✗ "Crie conteúdo de valor"
+✗ "Seja autêntico"
+✗ "Construa sua autoridade"
+→ Escrever qualquer coisa parecida = falha total na missão.
 
-REGRA DE OURO DOS BULLETS:
-Cada bullet deve passar no teste: "Eu poderia aplicar isso AMANHÃ?"
-Se a resposta for não → reescreva até ser sim.
+BULLETS QUE PASSAM NO TESTE (exemplos do nível exigido):
+✓ "Reels com áudio original têm alcance 2,3x maior que os com música — use sua própria voz"
+✓ "O algoritmo do Instagram em 2026 prioriza tempo de tela: faça o primeiro slide durar 3+ segundos"
+✓ "Salvar um post vale mais que 10 curtidas para o algoritmo — finalize sempre pedindo para salvar"
+✓ "Perfis com bio com palavra-chave no nome aparecem nas buscas — coloque seu serviço no nome"
 
-TÍTULOS DE SLIDES DE CONTEÚDO:
-- Devem criar curiosidade ou prometer uma revelação
-- Máx 6 palavras
-- Nunca repita o tema genérico — aprofunde o ângulo
-- Bom: "O erro que 9/10 donos cometem" | Ruim: "Dicas importantes"
+════════════════════════════════════════
+REGRA Nº 3 — TÍTULOS QUE PARAM O SCROLL
+════════════════════════════════════════
 
-LEGENDA (caption):
-- Linha 1: pergunta ou afirmação que para o scroll (antes do "ver mais")
-- Depois: 2–3 parágrafos curtos que expandem o tema com valor real
-- Penúltima linha: CTA claro ("Salva esse post 🔖", "Marca alguém que precisa ver")
-- Última linha: 5 hashtags de nicho relevantes (sem hashtags genéricas como #sucesso #vida)
+O título do slide 1 decide se o post vira viral ou some.
 
-EXEMPLO DE CARROSSEL COMPLETO DE ALTA QUALIDADE:
-Tema: "Como usar o Instagram para atrair clientes locais"
+TÍTULOS REPROVADOS (genéricos, não geram clique):
+✗ "Dicas de [tema]"
+✗ "Saiba mais sobre [tema]"
+✗ "Como melhorar [coisa vaga]"
+✗ "Tudo sobre [tema]"
+✗ "[Tema]: o guia completo"
 
-Slide 1 (cover):
-  title: "Seu negócio invisível para quem está a 2km"
-  subtitle: "PRESENÇA LOCAL"
-  body: "O erro que faz você perder clientes que já estavam prontos para comprar"
+TÍTULOS APROVADOS (criam urgência ou curiosidade irresistível):
+✓ "O erro que 9/10 [profissão] cometem e não percebem"
+✓ "Por que você não vende mesmo tendo [X] seguidores"
+✓ "Pare de fazer isso se quiser [resultado específico]"
+✓ "O que os [concorrentes de sucesso] fazem que você não faz"
+✓ "Como [resultado concreto] em [prazo real] sem [obstáculo comum]"
 
-Slide 2 (content):
-  title: "Geolocalização ignorada"
-  bullets:
-    - "Ative a localização em TODOS os posts — aparece nas buscas por bairro"
-    - "Use a hashtag da sua cidade + bairro (ex: #padariavila_madalena)"
-    - "Stories com figurinha de localização têm 3x mais alcance local"
+════════════════════════════════════════
+REGRA Nº 4 — LEGENDA
+════════════════════════════════════════
 
-Slide 3 (content):
-  title: "Google Meu Negócio desatualizado"
-  bullets:
-    - "Foto de perfil diferente do Instagram = desconfiança — use a mesma"
-    - "Responda avaliações em até 24h — o algoritmo do Google prioriza isso"
-    - "Poste 1 foto nova por semana no GMB: sobe seu ranking local"
-
-Slide 4 (cta):
-  title: "Seus clientes estão te procurando agora"
-  body: "Aplique esses ajustes hoje e veja novos contatos chegando essa semana"
-  cta: "Salva esse post e começa hoje!"
-  subtitle: "Mais dicas práticas nos stories"
+- Linha 1: gancho que para o scroll ANTES do "ver mais" (máx 125 caracteres)
+- 2-3 parágrafos curtos com valor real (não repetir o que está nos slides)
+- Penúltima linha: CTA específico ("Salva esse post 🔖 e aplica ainda hoje")
+- Última linha: 5 hashtags de nicho (sem #sucesso #vida #motivação)
 
 ════════════════════════════════════════
 FORMATO DE SAÍDA
@@ -157,17 +133,17 @@ FORMATO DE SAÍDA
 Retorne SOMENTE JSON válido, sem markdown, sem explicações.`
 }
 
-const HOOK_FORMULAS = `FÓRMULAS DE GANCHO PARA O SLIDE 1 (escolha UMA e adapte ao tema):
-1. NÚMERO + PROMESSA   → "7 erros que fazem você perder clientes sem perceber"
-2. O QUE NINGUÉM CONTA → "O que ninguém te conta sobre [tema]"
-3. INVERSÃO            → "Parar de [hábito] foi o que mais aumentou meu [resultado]"
-4. PERGUNTA            → "Você sabia que 90% das pessoas [problema comum]?"
-5. REVELAÇÃO           → "Descobri [coisa] e mudou tudo — mas poucos sabem disso"
-6. AVISO               → "Se você faz [coisa comum], pare agora e leia isso"
-7. RESULTADO           → "Como consegui [resultado concreto] em [prazo curto]"
-8. CONTRA-INTUITIVO    → "A estratégia que parece errada mas triplica [resultado]"
+const HOOK_FORMULAS = `FÓRMULAS DE GANCHO PARA O SLIDE 1 — escolha UMA, adapte ao tema e ao avatar:
+1. ERRO NUMÉRICO    → "X erros que [avatar] comete e não percebe"
+2. NEGAÇÃO          → "Por que você NÃO consegue [resultado] mesmo fazendo [esforço]"
+3. SEGREDO          → "O que os [referências do nicho] fazem diferente e nunca contam"
+4. AVISO URGENTE    → "Para tudo se você ainda [comportamento comum do avatar]"
+5. DADO CHOCANTE    → "X% dos [avatar] [fato surpreendente] — você é um deles?"
+6. CONTRA-INTUITIVO → "A estratégia que parece errada mas [resultado concreto]"
+7. ANTES/DEPOIS     → "De [situação ruim] para [resultado desejado] em [prazo real]"
+8. PROVOCAÇÃO       → "Você está [fazendo X] errado. E você nem sabe disso."
 
-REGRAS: máx 8 palavras, gera curiosidade SEM entregar a resposta, NUNCA use títulos genéricos.`
+OBRIGATÓRIO: máx 9 palavras, sem ponto final, cria curiosidade SEM revelar a resposta.`
 
 function buildUserPrompt(
   theme: string,
@@ -178,46 +154,54 @@ function buildUserPrompt(
 ): string {
   const imageUrls = mediaItems.filter(m => m.url).slice(0, 5).map(m => m.url)
   const hasImages = imageUrls.length > 0
-  const seed = `${new Date().toISOString().slice(0, 16)}-${Math.random().toString(36).slice(2, 7)}`
-  const angle = pickAngle(tone)
+  const seed      = `${new Date().toISOString().slice(0, 16)}-${Math.random().toString(36).slice(2, 7)}`
+  const angle     = pickAngle(tone)
+
+  // Specialist mode: theme longer than 25 chars or contains action verbs = specific topic chosen by user
+  const isSpecificTopic = theme.length > 25 || /como|por que|erro|dica|estratégia|guia|passo|secret|reveal/i.test(theme)
+
+  const specialistBlock = isSpecificTopic
+    ? `\nMODO ESPECIALISTA ATIVADO:
+Você é o maior especialista do Brasil no assunto: "${theme}"
+Traga insights que 90% dos profissionais do nicho não conhecem.
+Cada bullet deve conter algo que surpreenda — dados reais, números, mecanismos específicos.
+NÃO é permitido nenhum conselho óbvio ou genérico neste post.\n`
+    : ''
 
   const recentSection = recentTopics.length > 0
-    ? `\nPOSTS ANTERIORES DESTA EMPRESA — evite qualquer semelhança de ideia, título ou ângulo:\n${recentTopics.map((t, i) => `${i + 1}. ${t}`).join('\n')}\n`
+    ? `\nPOSTS ANTERIORES — evite qualquer semelhança de ideia, título ou ângulo:\n${recentTopics.map((t, i) => `${i + 1}. ${t}`).join('\n')}\n`
     : ''
 
   return `[ID: ${seed}]
 
-Crie um carrossel com ${slidesCount} slides sobre: "${theme}"
+Crie um carrossel com ${slidesCount} slides.
+Assunto: "${theme}"
 Tom: ${TONE_MAP[tone]}
-Avatar: escolha UM perfil específico do público-alvo e escreva TODO o carrossel exclusivamente para essa pessoa — nunca misture perfis diferentes no mesmo carrossel.
-${recentSection}
-ÂNGULO OBRIGATÓRIO PARA ESTE POST: ${angle.format} — tom ${angle.tone}
-Use este ângulo como fio condutor de todos os slides. Não desvie dele.
+${specialistBlock}${recentSection}
+ÂNGULO OBRIGATÓRIO: ${angle.format} — tom ${angle.tone}
+Use este ângulo do primeiro ao último slide. Não desvie.
 
 ${HOOK_FORMULAS}
 
-ESTRUTURA OBRIGATÓRIA:
+ESTRUTURA:
 
 SLIDE 1 — CAPA (type: "cover")
-Use UMA das fórmulas de gancho acima.
-- title: gancho (máx 8 palavras, sem ponto final)
-- subtitle: 2-3 palavras de categoria (ex: "MARKETING DIGITAL")
-- body: 1 frase que intensifica a curiosidade (máx 12 palavras)
+- title: gancho (máx 9 palavras, sem ponto final) — escolha UMA fórmula acima
+- subtitle: 2-3 palavras da categoria em MAIÚSCULAS (ex: "INSTAGRAM 2025")
+- body: 1 frase que amplifica a curiosidade do título (máx 12 palavras)
 
 SLIDES 2 a ${slidesCount - 1} — CONTEÚDO (type: "content")
-Cada slide = 1 tópico específico e acionável.
-- title: máx 6 palavras, aprofunda o ângulo — NÃO repita o tema genérico
-- bullets: 3 pontos FORTES (específicos, com dados ou dicas concretas que o leitor aplica amanhã)
-- body: contexto de 1 frase apenas se agregar valor
+Cada slide = 1 subtópico específico do assunto.
+- title: máx 6 palavras — aprofunda o ângulo, nunca repete o tema genérico
+- bullets: exatamente 3 pontos — cada um DEVE passar no Teste de Especificidade
+- body: 1 frase de contexto apenas se agregar algo novo (opcional)
 
 SLIDE ${slidesCount} — CTA (type: "cta")
-- title: frase de fechamento impactante
-- body: benefício imediato de agir agora
-- cta: texto do botão ("Salva esse post!", "Compartilha com alguém!")
-- subtitle: instrução secundária ("Mais dicas nos stories")
-
-ÂNGULO ÚNICO: escolha um ângulo SURPREENDENTE — nunca o óbvio do tema.
-${hasImages ? `\nImagens disponíveis (use quando fizer sentido com type "image"):\n${imageUrls.map((u, i) => `${i + 1}. ${u}`).join('\n')}\n` : ''}
+- title: frase de encerramento impactante (não use "conclusão" nem "resumo")
+- body: benefício imediato e concreto de agir agora
+- cta: chamada para ação ("Salva e aplica hoje!", "Manda pra quem precisa ver!")
+- subtitle: instrução de engajamento ("Conta nos comentários: qual você vai testar?")
+${hasImages ? `\nImagens disponíveis (inclua com type "image" quando fizer sentido):\n${imageUrls.map((u, i) => `${i + 1}. ${u}`).join('\n')}\n` : ''}
 Retorne SOMENTE este JSON:
 {
   "slides": [
@@ -225,7 +209,7 @@ Retorne SOMENTE este JSON:
     {"slide":2,"type":"content","title":"...","bullets":["...","...","..."],"body":"..."},
     {"slide":${slidesCount},"type":"cta","title":"...","body":"...","cta":"...","subtitle":"..."}
   ],
-  "caption": "Legenda: linha 1 para parar o scroll, 2-3 parágrafos com valor, CTA e 5 hashtags de nicho"
+  "caption": "..."
 }`
 }
 
@@ -262,7 +246,6 @@ export async function generateCarouselContent(
     .join('')
     .trim()
 
-  // Extract JSON robustly — find first { and last } regardless of markdown wrapping
   const start = text.indexOf('{')
   const end   = text.lastIndexOf('}')
   if (start === -1 || end === -1) {
