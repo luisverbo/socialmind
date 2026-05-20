@@ -47,7 +47,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       .catch(() => {})
   }, [companyId])
 
-  const pct      = company ? Math.min(100, (company.posts_used_this_month / company.posts_limit) * 100) : 0
+  const creditsUsed = company ? (company.credits_limit ?? 100) - (company.credits_balance ?? 0) : 0
+  const pct      = company ? Math.min(100, (creditsUsed / (company.credits_limit ?? 100)) * 100) : 0
   const barColor = pct >= 90 ? '#EF4444' : undefined
 
   return (
@@ -124,13 +125,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           )}
         </nav>
 
-        {/* Usage bar */}
+        {/* Credits bar */}
         {company && (
           <div className="mt-4 pt-4 border-t border-gray-100 px-1">
             <div className="flex justify-between text-xs mb-1.5">
               <span className="text-gray-400 font-medium capitalize">{company.plan}</span>
               <span className={pct >= 90 ? 'text-red-500 font-semibold' : 'text-gray-400'}>
-                {company.posts_used_this_month}/{company.posts_limit}
+                {company.credits_balance ?? 0}/{company.credits_limit ?? 100}
               </span>
             </div>
             <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -139,7 +140,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 style={{ width: `${pct}%`, background: barColor ?? 'linear-gradient(90deg, #6C3FE8, #E84393)' }}
               />
             </div>
-            <p className="text-[11px] text-gray-400 mt-1">posts este mês</p>
+            <p className="text-[11px] text-gray-400 mt-1">créditos disponíveis</p>
           </div>
         )}
       </aside>
@@ -153,7 +154,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <span className="font-bold text-sm text-gradient">SocialMind</span>
         </div>
         {company && (
-          <span className="text-xs text-gray-400">{company.posts_used_this_month}/{company.posts_limit}</span>
+          <span className="text-xs text-gray-400">{company.credits_balance ?? 0} créditos</span>
         )}
       </div>
 
