@@ -170,7 +170,7 @@ export async function GET(req: NextRequest) {
         .eq('id', sched.id)
         .single()
 
-      const ct = schedTheme?.content_themes as { theme_name: string; tone: string } | null
+      const ct = schedTheme?.content_themes as unknown as { theme_name: string; tone: string } | null
       const batchTheme = ct?.theme_name ?? 'Conteúdo geral'
       const batchTone  = (ct?.tone as 'educational' | 'motivational' | 'promotional') ?? 'educational'
 
