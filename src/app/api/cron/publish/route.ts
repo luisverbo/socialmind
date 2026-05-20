@@ -21,13 +21,14 @@ export async function GET(req: NextRequest) {
   const supabase = adminClient()
   const now = new Date().toISOString()
 
-  // Find posts that are approved and due for publishing
+  // Find approved posts that are due:
+  // 1. Posts with a scheduled_for that has passed
+  // 2. Posts with no scheduled_for (publish immediately)
   const { data: posts, error } = await supabase
     .from('posts')
     .select('id, company_id, scheduled_for')
     .eq('status', 'approved')
-    .lte('scheduled_for', now)
-    .not('scheduled_for', 'is', null)
+    .or(`scheduled_for.lte.${now},scheduled_for.is.null`)
     .limit(20)
 
   if (error) {
