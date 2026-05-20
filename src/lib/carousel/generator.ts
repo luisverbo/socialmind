@@ -380,8 +380,9 @@ ${structureBlock
     ? `Siga rigorosamente a estrutura definida acima.`
     : `Cada slide = 1 subtópico específico do assunto.`}
 - title: máx 6 palavras — específico, nunca genérico
-- bullets: exatamente 3 pontos — cada um DEVE passar no Teste de Especificidade
-- body: 1 frase de contexto adicional (opcional, apenas se agregar algo novo)
+- bullets: exatamente 3 pontos curtos — MÁXIMO 10 palavras cada — cada um DEVE passar no Teste de Especificidade
+- body: 1 frase CURTA de contexto adicional (opcional, máx 12 palavras, apenas se agregar algo novo)
+IMPORTANTE: bullets e body são renderizados em slides 1080×1080px — textos longos serão cortados. Priorize clareza e concisão.
 
 SLIDE ${slidesCount} — CTA (type: "cta")
 - title: frase de encerramento impactante (não use "conclusão" nem "resumo")

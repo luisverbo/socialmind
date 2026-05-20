@@ -83,28 +83,40 @@ function coverTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: strin
 
 function contentTemplate(slide: SlideContent, colors: BrandColors, slideNum: number, total: number, logoUrl?: string): string {
   const bullets = slide.bullets ?? []
+  // Calculate dynamic font sizes based on content length to prevent overflow
+  const titleLen = slide.title?.length ?? 0
+  const titleFontSize = titleLen > 60 ? 48 : titleLen > 40 ? 52 : 58
+  const bulletCount = bullets.length
+  const bodyLen = (slide.body?.length ?? 0)
+  const bulletsFontSize = bulletCount >= 4 || bodyLen > 80 ? 26 : bulletCount === 3 ? 28 : 30
+  const bulletsGap = bulletCount >= 4 ? 14 : 18
+  const h2MarginBottom = bulletCount >= 4 || bodyLen > 80 ? 24 : 30
+  const bodyFontSize = bulletCount >= 3 ? 26 : 28
+  const bodyMarginBottom = bulletCount >= 3 ? 20 : 24
+
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
   <style>
     ${baseStyles(colors)}
     body { background: #FFFFFF; }
     .top-bar { height: 8px; background: linear-gradient(90deg, ${colors.primary}, ${colors.secondary}); }
-    .slide { padding: 80px; justify-content: space-between; }
-    .counter { font-size: 26px; color: #9CA3AF; font-weight: 500; margin-bottom: 32px; }
+    .slide { padding: 64px 72px; justify-content: space-between; }
+    .counter { font-size: 24px; color: #9CA3AF; font-weight: 500; margin-bottom: 20px; }
     .counter span { color: ${colors.primary}; font-weight: 700; }
-    h2 { font-size: 68px; font-weight: 800; color: #1A1A2E; line-height: 1.1; letter-spacing: -1.5px; margin-bottom: 48px; }
-    .body-text { font-size: 38px; color: #374151; line-height: 1.6; margin-bottom: 40px; }
-    .bullets { list-style: none; display: flex; flex-direction: column; gap: 28px; }
+    h2 { font-size: ${titleFontSize}px; font-weight: 800; color: #1A1A2E; line-height: 1.15; letter-spacing: -1px; margin-bottom: ${h2MarginBottom}px; }
+    .body-text { font-size: ${bodyFontSize}px; color: #374151; line-height: 1.55; margin-bottom: ${bodyMarginBottom}px; }
+    .content-area { flex: 1; min-height: 0; overflow: hidden; }
+    .bullets { list-style: none; display: flex; flex-direction: column; gap: ${bulletsGap}px; }
     .bullet {
-      display: flex; align-items: flex-start; gap: 24px;
-      font-size: 36px; color: #374151; line-height: 1.5;
+      display: flex; align-items: flex-start; gap: 20px;
+      font-size: ${bulletsFontSize}px; color: #374151; line-height: 1.45;
     }
     .bullet-dot {
-      flex-shrink: 0; width: 14px; height: 14px; border-radius: 50%;
+      flex-shrink: 0; width: 12px; height: 12px; border-radius: 50%;
       background: linear-gradient(135deg, ${colors.primary}, ${colors.secondary});
-      margin-top: 14px;
+      margin-top: 10px;
     }
-    .footer { display: flex; align-items: center; justify-content: space-between; }
-    .footer-text { font-size: 24px; color: #9CA3AF; }
+    .footer { display: flex; align-items: center; justify-content: space-between; padding-top: 16px; flex-shrink: 0; }
+    .footer-text { font-size: 22px; color: #9CA3AF; }
     .progress { display: flex; gap: 8px; }
     .progress-dot { width: 10px; height: 10px; border-radius: 50%; background: #E5E7EB; }
     .progress-dot.active { background: ${colors.primary}; }
@@ -112,7 +124,7 @@ function contentTemplate(slide: SlideContent, colors: BrandColors, slideNum: num
   <div class="top-bar"></div>
   <div class="slide">
     ${logoHtml(logoUrl, false)}
-    <div>
+    <div class="content-area">
       <p class="counter"><span>${slideNum}</span> / ${total}</p>
       <h2>${escapeHtml(slide.title)}</h2>
       ${slide.body ? `<p class="body-text">${escapeHtml(slide.body)}</p>` : ''}
