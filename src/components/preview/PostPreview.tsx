@@ -29,6 +29,8 @@ export default function PostPreview({ post: initialPost }: Props) {
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
   const [regeneratingSlide, setRegeneratingSlide] = useState<number | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [scheduleDate, setScheduleDate] = useState('')
+  const [scheduleTime, setScheduleTime] = useState('09:00')
 
   const images: string[] = Array.isArray(post.slides_images) ? post.slides_images : []
   const total = images.length
@@ -79,6 +81,25 @@ export default function PostPreview({ post: initialPost }: Props) {
       showMessage('success', 'Legenda salva!')
     } catch {
       showMessage('error', 'Erro ao salvar legenda.')
+    } finally {
+      setLoadingAction(null)
+    }
+  }
+
+  async function handleSchedule() {
+    if (!scheduleDate || !scheduleTime) {
+      showMessage('error', 'Selecione data e horário.')
+      return
+    }
+    setLoadingAction('schedule')
+    try {
+      const supabase = getSupabase()
+      const scheduledFor = new Date(`${scheduleDate}T${scheduleTime}:00`).toISOString()
+      await supabase.from('posts').update({ scheduled_for: scheduledFor }).eq('id', post.id)
+      setPost(p => ({ ...p, scheduled_for: scheduledFor }))
+      showMessage('success', `Post agendado para ${new Date(scheduledFor).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}!`)
+    } catch {
+      showMessage('error', 'Erro ao agendar post.')
     } finally {
       setLoadingAction(null)
     }
@@ -285,6 +306,57 @@ export default function PostPreview({ post: initialPost }: Props) {
                 </p>
               )}
             </div>
+
+            {/* Schedule section — only when no scheduled_for yet */}
+            {!post.scheduled_for && (post.status === 'waiting' || post.status === 'draft') && (
+              <div className="card p-5 space-y-3">
+                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Agendar publicação</h2>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">Data</label>
+                    <input
+                      type="date"
+                      value={scheduleDate}
+                      min={new Date().toISOString().split('T')[0]}
+                      onChange={e => setScheduleDate(e.target.value)}
+                      className="input-field text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">Horário</label>
+                    <input
+                      type="time"
+                      value={scheduleTime}
+                      onChange={e => setScheduleTime(e.target.value)}
+                      className="input-field text-sm"
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={handleSchedule}
+                  disabled={loadingAction !== null || !scheduleDate}
+                  className="w-full flex items-center justify-center gap-2 bg-[#6C3FE8] hover:bg-[#5830cc] text-white font-semibold py-3 rounded-xl transition-all disabled:opacity-60 text-sm"
+                >
+                  {loadingAction === 'schedule' ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : '📅'}
+                  Definir horário
+                </button>
+              </div>
+            )}
+
+            {/* Scheduled info */}
+            {post.scheduled_for && (post.status === 'waiting' || post.status === 'draft' || post.status === 'approved') && (
+              <div className="card p-4 flex items-center gap-3 bg-blue-50 border-blue-200">
+                <div className="text-lg">📅</div>
+                <div>
+                  <p className="text-sm font-semibold text-blue-700">Publicação agendada</p>
+                  <p className="text-xs text-blue-600 mt-0.5">
+                    {new Date(post.scheduled_for).toLocaleString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Action buttons */}
             {(post.status === 'waiting' || post.status === 'draft') && (

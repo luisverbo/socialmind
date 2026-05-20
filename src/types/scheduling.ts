@@ -5,6 +5,9 @@ export interface Company {
   plan: 'starter' | 'pro' | 'agency'
   posts_limit: number
   posts_used_this_month: number
+  credits_balance: number
+  credits_limit: number
+  credits_used_this_month: number
   reset_date: string
   active: boolean
 }
@@ -20,7 +23,7 @@ export interface PostSchedule {
   id: string
   company_id: string
   theme_id: string | null
-  type: 'recurring' | 'one_time'
+  type: 'recurring' | 'one_time' | 'daily'
   day_of_week: string | null
   scheduled_date: string | null
   scheduled_time: string

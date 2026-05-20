@@ -70,12 +70,12 @@ export async function generateForPost(
 
   const { data: company } = await supabase
     .from('companies')
-    .select('posts_used_this_month, posts_limit')
+    .select('credits_balance, credits_limit')
     .eq('id', companyId)
     .single()
 
-  if (company && company.posts_used_this_month >= company.posts_limit) {
-    throw new Error(`Limite mensal de posts atingido para empresa ${companyId}`)
+  if (company && company.credits_balance < slidesCount) {
+    throw new Error(`Créditos insuficientes (${company.credits_balance} disponíveis, ${slidesCount} necessários). Aguarde a renovação ou faça upgrade.`)
   }
 
   const logoUrl: string | undefined = ctx.logo_url ?? undefined
@@ -103,9 +103,9 @@ export async function generateForPost(
   await supabase.from('posts').update({ slides_images: imageUrls }).eq('id', postId)
 
   try {
-    await supabase.rpc('increment_posts_used', { p_company_id: companyId })
+    await supabase.rpc('deduct_credits', { p_company_id: companyId, p_amount: carousel.slides.length })
   } catch (e) {
-    console.error(`[${callerLabel}] increment_posts_used falhou (não fatal):`, e)
+    console.error(`[${callerLabel}] deduct_credits falhou (não fatal):`, e)
   }
 
   await supabase.from('notifications').insert({

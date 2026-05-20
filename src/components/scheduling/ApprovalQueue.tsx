@@ -1,9 +1,103 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { CheckCircle, XCircle, Edit3, Save, X, CheckSquare, Clock } from 'lucide-react'
+import { CheckCircle, XCircle, Edit3, Save, X, CheckSquare, Clock, ChevronLeft, ChevronRight, Expand, ExternalLink } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import Link from 'next/link'
 import type { Post } from '@/types/scheduling'
+
+// ── Slide Carousel Modal ──────────────────────────────────────────────────────
+function SlideCarouselModal({ images, postId, initialIndex, onClose }: {
+  images: string[]
+  postId: string
+  initialIndex: number
+  onClose: () => void
+}) {
+  const [current, setCurrent] = useState(initialIndex)
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+      if (e.key === 'ArrowLeft')  setCurrent(c => Math.max(0, c - 1))
+      if (e.key === 'ArrowRight') setCurrent(c => Math.min(images.length - 1, c + 1))
+    }
+    document.addEventListener('keydown', h)
+    return () => document.removeEventListener('keydown', h)
+  }, [onClose, images.length])
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/85 p-4">
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+      >
+        <X size={18} className="text-white" />
+      </button>
+
+      {/* Slide image */}
+      <div className="relative w-full max-w-sm aspect-square rounded-2xl overflow-hidden shadow-2xl">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={images[current]}
+          alt={`Slide ${current + 1}`}
+          className="w-full h-full object-cover"
+        />
+
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={() => setCurrent(c => Math.max(0, c - 1))}
+              disabled={current === 0}
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all disabled:opacity-30"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              onClick={() => setCurrent(c => Math.min(images.length - 1, c + 1))}
+              disabled={current === images.length - 1}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all disabled:opacity-30"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Counter */}
+      <p className="text-white/70 text-sm mt-3 font-medium">
+        {current + 1} / {images.length}
+      </p>
+
+      {/* Thumbnail strip */}
+      {images.length > 1 && (
+        <div className="flex gap-2 mt-3 overflow-x-auto max-w-sm pb-1">
+          {images.map((url, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className={`flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 transition-all ${
+                i === current ? 'border-white' : 'border-white/30 opacity-60 hover:opacity-90'
+              }`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={url} alt={`Slide ${i + 1}`} className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Full preview link */}
+      <Link
+        href={`/preview/${postId}`}
+        className="mt-4 flex items-center gap-2 bg-white text-[#1A1A2E] text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-gray-100 transition-colors"
+        onClick={onClose}
+      >
+        <ExternalLink size={14} />
+        Abrir preview completo
+      </Link>
+    </div>
+  )
+}
 
 interface Props { companyId: string; onCountChange: (n: number) => void }
 
@@ -13,6 +107,7 @@ export default function ApprovalQueue({ companyId, onCountChange }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editCaption, setEditCaption] = useState('')
   const [processing, setProcessing] = useState<string | null>(null)
+  const [previewModal, setPreviewModal] = useState<{ postId: string; images: string[]; index: number } | null>(null)
 
   const fetchPosts = useCallback(async () => {
     setLoading(true)
@@ -101,6 +196,16 @@ export default function ApprovalQueue({ companyId, onCountChange }: Props) {
 
   return (
     <div>
+      {/* Slide carousel modal */}
+      {previewModal && (
+        <SlideCarouselModal
+          images={previewModal.images}
+          postId={previewModal.postId}
+          initialIndex={previewModal.index}
+          onClose={() => setPreviewModal(null)}
+        />
+      )}
+
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-gray-400">{posts.length} post{posts.length !== 1 ? 's' : ''} aguardando aprovação</p>
         <button
@@ -173,14 +278,24 @@ export default function ApprovalQueue({ companyId, onCountChange }: Props) {
               {/* Slides preview */}
               {post.slides_images && post.slides_images.length > 0 ? (
                 <div className="px-5 py-4">
-                  <p className="text-xs text-gray-400 font-medium mb-3">
-                    Preview dos slides ({post.slides_images.length})
-                  </p>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs text-gray-400 font-medium">
+                      Preview dos slides ({post.slides_images.length})
+                    </p>
+                    <button
+                      onClick={() => setPreviewModal({ postId: post.id, images: post.slides_images, index: 0 })}
+                      className="flex items-center gap-1 text-xs text-[#6C3FE8] hover:text-[#5830cc] font-medium transition-colors"
+                    >
+                      <Expand size={11} />
+                      Ampliar
+                    </button>
+                  </div>
                   <div className="flex gap-2 overflow-x-auto pb-1">
                     {post.slides_images.map((url, i) => (
-                      <div
+                      <button
                         key={i}
-                        className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border border-gray-200 bg-gray-100 relative"
+                        onClick={() => setPreviewModal({ postId: post.id, images: post.slides_images, index: i })}
+                        className="flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border border-gray-200 bg-gray-100 relative hover:border-[#6C3FE8] hover:shadow-md transition-all group"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -189,10 +304,13 @@ export default function ApprovalQueue({ companyId, onCountChange }: Props) {
                           className="w-full h-full object-cover"
                           loading="lazy"
                         />
-                        <span className="absolute bottom-1 right-1.5 text-[10px] font-bold text-white drop-shadow">
+                        <span className="absolute bottom-1 right-1.5 text-[10px] font-bold text-white drop-shadow bg-black/30 rounded px-1">
                           {i + 1}
                         </span>
-                      </div>
+                        <div className="absolute inset-0 bg-[#6C3FE8]/0 group-hover:bg-[#6C3FE8]/10 transition-all flex items-center justify-center">
+                          <Expand size={16} className="text-white opacity-0 group-hover:opacity-100 drop-shadow transition-all" />
+                        </div>
+                      </button>
                     ))}
                   </div>
                 </div>

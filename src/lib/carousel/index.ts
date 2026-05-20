@@ -78,13 +78,26 @@ async function runGeneration(input: GenerateCarouselInput): Promise<string> {
     accent: '#A855F7',
   }
 
+  // Credits check
+  const { data: company } = await supabase
+    .from('companies')
+    .select('credits_balance')
+    .eq('id', input.companyId)
+    .single()
+
+  if (company && company.credits_balance < input.slidesCount) {
+    throw new Error(`Créditos insuficientes (${company.credits_balance} disponíveis, ${input.slidesCount} necessários). Aguarde a renovação ou faça upgrade.`)
+  }
+
+  const logoUrl: string | undefined = (ctx as unknown as { logo_url?: string }).logo_url ?? undefined
+
   // Generate content with Claude
   const carousel = await generateCarouselContent(
     ctx, mediaItems, input.theme, input.tone, input.slidesCount
   )
 
   // Render slides to PNG
-  const buffers = await renderAllSlides(carousel.slides, brandColors)
+  const buffers = await renderAllSlides(carousel.slides, brandColors, logoUrl)
 
   // Create post record first to get an ID
   const status = input.publishMode === 'review' ? 'waiting' : 'approved'
@@ -117,6 +130,13 @@ async function runGeneration(input: GenerateCarouselInput): Promise<string> {
       slides_images: imageUrls,
     })
     .eq('id', post.id)
+
+  // Deduct credits
+  try {
+    await supabase.rpc('deduct_credits', { p_company_id: input.companyId, p_amount: carousel.slides.length })
+  } catch (e) {
+    console.error('[carousel/index] deduct_credits falhou (não fatal):', e)
+  }
 
   // Create notification
   await supabase.from('notifications').insert({

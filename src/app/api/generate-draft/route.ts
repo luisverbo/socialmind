@@ -37,19 +37,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Post já foi gerado' }, { status: 400 })
     }
 
-    // Check monthly limit before generating
+    // Check credits before generating
     const { data: company } = await supabase
       .from('companies')
-      .select('posts_used_this_month, posts_limit')
+      .select('credits_balance, credits_limit')
       .eq('id', post.company_id)
       .single()
-
-    if (company && company.posts_used_this_month >= company.posts_limit) {
-      return NextResponse.json(
-        { error: `Limite mensal atingido (${company.posts_limit} posts). Aguarde a renovação ou faça upgrade do plano.` },
-        { status: 402 }
-      )
-    }
 
     // Get schedule info for theme/tone/slides
     let theme = 'Conteúdo geral'
@@ -115,6 +108,11 @@ export async function POST(req: NextRequest) {
       const finalTheme = (typeof custom_topic === 'string' && custom_topic.trim()) ? custom_topic.trim() : theme
       const logoUrl: string | undefined = ctx.logo_url ?? undefined
 
+      // Credits check just before generation
+      if (company && company.credits_balance < slidesCount) {
+        throw new Error(`Créditos insuficientes (${company.credits_balance} disponíveis, ${slidesCount} necessários). Aguarde a renovação ou faça upgrade.`)
+      }
+
       const carousel = await generateCarouselContent(ctx, media ?? [], finalTheme, tone, slidesCount, recentTopics)
       const buffers = await renderAllSlides(carousel.slides, brandColors, logoUrl)
 
@@ -138,11 +136,11 @@ export async function POST(req: NextRequest) {
 
       await supabase.from('posts').update({ slides_images: imageUrls }).eq('id', post_id)
 
-      // Increment usage counter after successful generation
+      // Deduct credits after successful generation
       try {
-        await supabase.rpc('increment_posts_used', { p_company_id: post.company_id })
+        await supabase.rpc('deduct_credits', { p_company_id: post.company_id, p_amount: carousel.slides.length })
       } catch (e) {
-        console.error('[generate-draft] increment_posts_used falhou (não fatal):', e)
+        console.error('[generate-draft] deduct_credits falhou (não fatal):', e)
       }
 
       await supabase.from('notifications').insert({

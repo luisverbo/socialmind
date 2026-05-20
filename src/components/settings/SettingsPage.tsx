@@ -46,8 +46,9 @@ export default function SettingsPage() {
     )
   }
 
+  const creditsUsed = company ? (company.credits_limit ?? 100) - (company.credits_balance ?? 0) : 0
   const pct = company
-    ? Math.min(100, Math.round((company.posts_used_this_month / company.posts_limit) * 100))
+    ? Math.min(100, Math.round((creditsUsed / (company.credits_limit ?? 100)) * 100))
     : 0
 
   return (
@@ -87,8 +88,8 @@ export default function SettingsPage() {
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Este mês</h2>
           <div className="grid grid-cols-3 gap-3">
             <div className="card p-4 text-center">
-              <p className="text-2xl font-bold text-[#6C3FE8]">{company.posts_used_this_month}</p>
-              <p className="text-xs text-gray-400 mt-1">Posts criados</p>
+              <p className="text-2xl font-bold text-[#6C3FE8]">{company.credits_used_this_month ?? 0}</p>
+              <p className="text-xs text-gray-400 mt-1">Créditos usados</p>
             </div>
             <div className="card p-4 text-center">
               <p className="text-2xl font-bold text-green-500">{monthStats?.published ?? '—'}</p>
@@ -104,16 +105,16 @@ export default function SettingsPage() {
         </section>
       )}
 
-      {/* Post limit usage */}
+      {/* Credits usage */}
       {company && (
         <div className="card p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <BarChart3 size={16} className="text-gray-400" />
-              <span className="text-sm font-medium text-[#1A1A2E]">Uso do plano</span>
+              <span className="text-sm font-medium text-[#1A1A2E]">Créditos do plano</span>
             </div>
             <span className={`text-xs font-semibold ${pct >= 90 ? 'text-red-500' : 'text-gray-400'}`}>
-              {company.posts_used_this_month} / {company.posts_limit} posts
+              {company.credits_balance ?? 0} / {company.credits_limit ?? 100} disponíveis
             </span>
           </div>
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -126,7 +127,10 @@ export default function SettingsPage() {
             />
           </div>
           <div className="flex items-center justify-between text-xs text-gray-400">
-            <span>Plano <strong className="text-[#1A1A2E]">{company.plan.charAt(0).toUpperCase() + company.plan.slice(1)}</strong></span>
+            <div>
+              <span>Plano <strong className="text-[#1A1A2E]">{company.plan.charAt(0).toUpperCase() + company.plan.slice(1)}</strong></span>
+              <span className="ml-2 text-gray-300">• 1 crédito = 1 slide gerado</span>
+            </div>
             <span>Renova em {new Date(company.reset_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</span>
           </div>
         </div>

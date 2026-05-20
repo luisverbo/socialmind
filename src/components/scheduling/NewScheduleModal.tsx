@@ -36,7 +36,7 @@ function getNextOccurrences(dayOfWeek: string, time: string, weeks: number): Dat
 }
 
 export default function NewScheduleModal({ companyId, onClose, onCreated }: Props) {
-  const [type, setType]               = useState<'recurring' | 'one_time'>('recurring')
+  const [type, setType]               = useState<'recurring' | 'one_time' | 'daily'>('recurring')
   const [dayOfWeek, setDayOfWeek]     = useState('monday')
   const [scheduledDate, setScheduledDate] = useState('')
   const [scheduledTime, setScheduledTime] = useState('09:00')
@@ -74,8 +74,11 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
 
       if (type === 'recurring') {
         conflictQuery.eq('day_of_week', dayOfWeek).eq('type', 'recurring')
-      } else {
+      } else if (type === 'one_time') {
         conflictQuery.eq('scheduled_date', scheduledDate).eq('type', 'one_time')
+      } else {
+        // daily — check for existing daily schedule at same time
+        conflictQuery.eq('type', 'daily')
       }
 
       const { data: conflict } = await conflictQuery.limit(1)
@@ -103,13 +106,14 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
         scheduled_time: scheduledTime + ':00',
         publish_mode: publishMode,
         status:       'active',
-        repeat:       type === 'recurring',
+        repeat:       type === 'recurring' || type === 'daily',
       }
       if (type === 'recurring') {
         schedulePayload.day_of_week = dayOfWeek
-      } else {
+      } else if (type === 'one_time') {
         schedulePayload.scheduled_date = scheduledDate
       }
+      // daily: no day_of_week or scheduled_date needed
 
       const { data: schedule, error: schedErr } = await supabase
         .from('post_schedules')
@@ -121,7 +125,30 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
       // Create draft posts and capture IDs
       let firstPostId: string | null = null
 
-      if (type === 'recurring') {
+      if (type === 'daily') {
+        // For daily: just create the first post (today/tomorrow), cron handles the rest
+        const todayOrNextOccurrence = (() => {
+          const d = new Date()
+          const [h, m] = scheduledTime.split(':').map(Number)
+          d.setHours(h, m, 0, 0)
+          if (d <= new Date()) d.setDate(d.getDate() + 1) // if time already passed today, use tomorrow
+          return d
+        })()
+        const { data: insertedPost } = await supabase
+          .from('posts')
+          .insert({
+            company_id:    companyId,
+            schedule_id:   schedule.id,
+            status:        'draft',
+            scheduled_for: todayOrNextOccurrence.toISOString(),
+            content:       [],
+            slides_html:   [],
+            slides_images: [],
+          })
+          .select('id')
+          .single()
+        firstPostId = insertedPost?.id ?? null
+      } else if (type === 'recurring') {
         const dates = getNextOccurrences(dayOfWeek, scheduledTime, 4)
         if (dates.length > 0) {
           const { data: insertedPosts } = await supabase
@@ -250,27 +277,31 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
           {/* Tipo */}
           <div>
             <label className="form-label">Tipo de agendamento</label>
-            <div className="grid grid-cols-2 gap-2">
-              {(['recurring', 'one_time'] as const).map(t => (
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { value: 'daily',     icon: '📆', label: 'Diário',     desc: 'Todo dia' },
+                { value: 'recurring', icon: '🔁', label: 'Semanal',    desc: 'Toda semana' },
+                { value: 'one_time',  icon: '📅', label: 'Pontual',    desc: 'Data única' },
+              ] as const).map(t => (
                 <button
-                  key={t}
+                  key={t.value}
                   type="button"
-                  onClick={() => setType(t)}
+                  onClick={() => setType(t.value)}
                   className={`p-3 rounded-xl border text-sm font-medium transition-all text-left ${
-                    type === t
+                    type === t.value
                       ? 'bg-[#F8F7FF] border-[#6C3FE8] text-[#6C3FE8]'
                       : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
                   }`}
                 >
-                  <div className="font-semibold">{t === 'recurring' ? '🔁 Recorrente' : '📅 Pontual'}</div>
-                  <div className="text-xs mt-0.5 opacity-70">{t === 'recurring' ? 'Toda semana' : 'Data específica'}</div>
+                  <div className="font-semibold">{t.icon} {t.label}</div>
+                  <div className="text-xs mt-0.5 opacity-70">{t.desc}</div>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Dia / Data */}
-          {type === 'recurring' ? (
+          {/* Dia / Data — hidden for 'daily' */}
+          {type === 'recurring' && (
             <div>
               <label className="form-label">Dia da semana</label>
               <select
@@ -283,7 +314,8 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
                 ))}
               </select>
             </div>
-          ) : (
+          )}
+          {type === 'one_time' && (
             <div>
               <label className="form-label">Data <span className="text-[#6C3FE8]">*</span></label>
               <input
@@ -390,6 +422,12 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
           </div>
 
           {/* Preview */}
+          {type === 'daily' && scheduledTime && (
+            <div className="bg-[#F8F7FF] border border-[#6C3FE8]/15 rounded-xl p-4">
+              <p className="text-xs text-[#6C3FE8] font-medium mb-2">📆 Publicação diária às {scheduledTime}</p>
+              <p className="text-xs text-gray-500">Um novo post é gerado e publicado todo dia neste horário. Os créditos do seu plano determinam quantos posts você pode gerar por mês.</p>
+            </div>
+          )}
           {type === 'recurring' && scheduledTime && (
             <div className="bg-[#F8F7FF] border border-[#6C3FE8]/15 rounded-xl p-4">
               <p className="text-xs text-[#6C3FE8] font-medium mb-2">Posts que serão criados (próximas 4 semanas):</p>
@@ -398,7 +436,7 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
                   <div key={i} className="flex items-center gap-2 text-xs text-gray-500">
                     <div className="w-1 h-1 rounded-full bg-[#6C3FE8]/40" />
                     {i === 0 && <span className="text-[#6C3FE8] font-medium">→ Gerado agora</span>}
-                    {i > 0 && <span>Gerado domingo</span>}
+                    {i > 0 && <span>Gerado todo domingo</span>}
                     {' '}— {d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'short' })} às {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 ))}

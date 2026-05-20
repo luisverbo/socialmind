@@ -72,13 +72,14 @@ export function useCompany() {
     if (companyId) fetchCompany(companyId)
   }, [companyId, fetchCompany])
 
+  // Legacy: keep postsRemaining for backward compat
   const postsRemaining = company
     ? Math.max(0, company.posts_limit - company.posts_used_this_month)
     : null
 
-  const canCreatePost = company
-    ? company.posts_used_this_month < company.posts_limit
-    : false
+  // Credits-based
+  const creditsBalance = company?.credits_balance ?? null
+  const canCreatePost  = company ? (company.credits_balance ?? 0) >= 5 : false
 
-  return { company, companyId, loading, refresh, postsRemaining, canCreatePost }
+  return { company, companyId, loading, refresh, postsRemaining, creditsBalance, canCreatePost }
 }
