@@ -67,6 +67,7 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
   const [dailyTimes, setDailyTimes]     = useState<string[]>(['09:00'])
   const [durationType, setDurationType] = useState<'indefinite' | 'days'>('indefinite')
   const [durationDays, setDurationDays] = useState(30)
+  const [dailyStartDate, setDailyStartDate] = useState(() => new Date().toISOString().split('T')[0])
 
   useEffect(() => {
     supabase.from('content_themes').select('*').eq('company_id', companyId)
@@ -89,6 +90,7 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
     const e: Record<string, string> = {}
     if (!scheduledTime && type !== 'daily') e.scheduledTime = 'Horário é obrigatório'
     if (type === 'one_time' && !scheduledDate) e.scheduledDate = 'Data é obrigatória'
+    if (type === 'daily' && !dailyStartDate) e.dailyStartDate = 'Escolha a data do primeiro post'
     if (type === 'daily' && durationType === 'days' && durationDays < 1) e.durationDays = 'Informe quantos dias'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -170,17 +172,20 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
 
       if (type === 'daily') {
         // Generate first week (7 days) of posts, respecting duration_days
-        const days = Math.min(7, durationType === 'days' ? durationDays : 7)
-        const now  = new Date()
+        const days      = Math.min(7, durationType === 'days' ? durationDays : 7)
+        const now       = new Date()
+        // Use chosen start date; if it's today and a time has already passed, still allow it
+        const startBase = dailyStartDate
+          ? new Date(dailyStartDate + 'T00:00:00')
+          : new Date()
         const posts: Record<string, unknown>[] = []
 
         for (let d = 0; d < days; d++) {
           for (const t of dailyTimes) {
             const [h, m] = t.split(':').map(Number)
-            const dt = new Date(now)
+            const dt = new Date(startBase)
             dt.setDate(dt.getDate() + d)
             dt.setHours(h, m, 0, 0)
-            if (dt <= now) { dt.setDate(dt.getDate() + 1) } // skip past times today
             posts.push({
               company_id:    companyId,
               schedule_id:   schedule.id,
@@ -429,6 +434,22 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Start date */}
+              <div>
+                <label className="form-label">Data do primeiro post <span className="text-[#6C3FE8]">*</span></label>
+                <input
+                  type="date"
+                  value={dailyStartDate}
+                  min={new Date().toISOString().split('T')[0]}
+                  onChange={e => setDailyStartDate(e.target.value)}
+                  className={`input-field ${errors.dailyStartDate ? 'border-red-400' : ''}`}
+                />
+                {errors.dailyStartDate
+                  ? <p className="form-error">{errors.dailyStartDate}</p>
+                  : <p className="form-hint">Os posts seguintes serão criados nos dias subsequentes.</p>
+                }
               </div>
 
               {/* Time slots */}
