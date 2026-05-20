@@ -10,6 +10,7 @@ export async function generateForPost(
   scheduleId: string | null,
   callerLabel = 'generate',
   batchAngle?: WeekPlanItem,
+  themeOverride?: { theme_name: string; tone: 'educational' | 'motivational' | 'promotional' },
 ): Promise<void> {
   let theme = 'Conteúdo geral'
   let tone: 'educational' | 'motivational' | 'promotional' = 'educational'
@@ -33,6 +34,12 @@ export async function generateForPost(
         if (!schedule.slides_count) slidesCount = ct.slides_count ?? 7
       }
     }
+  }
+
+  // Weekly theme override takes priority over schedule's content_themes
+  if (themeOverride) {
+    theme = themeOverride.theme_name
+    tone  = themeOverride.tone
   }
 
   const { data: ctx, error: ctxErr } = await supabase

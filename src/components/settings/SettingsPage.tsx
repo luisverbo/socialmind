@@ -8,6 +8,7 @@ import RecentPublications from './RecentPublications'
 import BrandSettings from './BrandSettings'
 import BusinessSettings from './BusinessSettings'
 import AdminCreditsPanel from './AdminCreditsPanel'
+import WeeklyScheduleSettings from './WeeklyScheduleSettings'
 import { Settings, BarChart3, Zap } from 'lucide-react'
 import type { Company } from '@/types/scheduling'
 
@@ -90,6 +91,12 @@ export default function SettingsPage() {
       <section>
         <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Integração</h2>
         <InstagramConnect />
+      </section>
+
+      {/* Weekly theme schedule */}
+      <section>
+        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Grade semanal de conteúdo</h2>
+        <WeeklyScheduleSettings />
       </section>
 
       {/* Monthly stats */}

@@ -168,48 +168,87 @@ export async function GET(req: NextRequest) {
         .update({ last_batch_at: new Date().toISOString() })
         .eq('id', sched.id)
 
-      // ── Generate week plan for this batch (unique angle per post) ──
-      const { data: schedTheme } = await supabase
-        .from('post_schedules')
-        .select('content_themes(theme_name, tone)')
-        .eq('id', sched.id)
-        .single()
+      // ── Fetch schedule default theme + weekly theme grade ──
+      const [{ data: schedTheme }, { data: batchCtx }, { data: weeklyRows }] = await Promise.all([
+        supabase.from('post_schedules').select('content_themes(theme_name, tone)').eq('id', sched.id).single(),
+        supabase.from('company_context').select('*').eq('company_id', sched.company_id).single(),
+        supabase.from('weekly_theme_schedule')
+          .select('day_of_week, theme_id, tone, enabled')
+          .eq('company_id', sched.company_id)
+          .eq('enabled', true),
+      ])
 
-      const ct = schedTheme?.content_themes as unknown as { theme_name: string; tone: string } | null
-      const batchTheme = ct?.theme_name ?? 'Conteúdo geral'
-      const batchTone  = (ct?.tone as 'educational' | 'motivational' | 'promotional') ?? 'educational'
+      const ct         = schedTheme?.content_themes as unknown as { theme_name: string; tone: string } | null
+      const defaultTheme = ct?.theme_name ?? 'Conteúdo geral'
+      const defaultTone  = (ct?.tone as 'educational' | 'motivational' | 'promotional') ?? 'educational'
 
-      const { data: batchCtx } = await supabase
-        .from('company_context')
-        .select('*')
-        .eq('company_id', sched.company_id)
-        .single()
+      // Build weekly map: day_of_week → { theme_id, tone }
+      const weeklyDowMap: Record<number, { theme_id: string; tone: string }> = {}
+      ;(weeklyRows ?? []).forEach(r => {
+        if (r.theme_id) weeklyDowMap[r.day_of_week] = { theme_id: r.theme_id, tone: r.tone }
+      })
 
-      let weekAngles: { topic: string; hook: string; format: string; keyInsight: string }[] = []
-      if (batchCtx && insertedPosts && insertedPosts.length > 0) {
-        try {
-          weekAngles = await generateWeekPlan(batchCtx, batchTheme, batchTone, insertedPosts.length)
-          console.log(`[cron/generate] Plano de semana gerado: ${weekAngles.length} ângulos para schedule ${sched.id}`)
-        } catch (e) {
-          console.warn('[cron/generate] generateWeekPlan falhou (não fatal):', e)
-        }
+      // Fetch all theme names we'll need from the weekly map
+      const weeklyThemeIds = [...new Set(Object.values(weeklyDowMap).map(v => v.theme_id))]
+      const weeklyThemeCache: Record<string, { theme_name: string; tone: 'educational' | 'motivational' | 'promotional' }> = {}
+      if (weeklyThemeIds.length > 0) {
+        const { data: themeRows } = await supabase
+          .from('content_themes')
+          .select('id, theme_name, tone')
+          .in('id', weeklyThemeIds)
+        ;(themeRows ?? []).forEach(t => {
+          weeklyThemeCache[t.id] = { theme_name: t.theme_name, tone: t.tone as 'educational' | 'motivational' | 'promotional' }
+        })
       }
 
-      // Generate ALL posts in the batch sequentially with their unique angles
+      // Helper: get effective theme for a post by its scheduled date
+      const getEffectiveTheme = (scheduledFor: string) => {
+        const dow   = new Date(scheduledFor).getDay()
+        const entry = weeklyDowMap[dow]
+        if (!entry) return { theme_name: defaultTheme, tone: defaultTone as 'educational' | 'motivational' | 'promotional' }
+        return weeklyThemeCache[entry.theme_id] ?? { theme_name: defaultTheme, tone: defaultTone as 'educational' | 'motivational' | 'promotional' }
+      }
+
+      // Group inserted posts by their effective (theme, tone)
+      type PostRef = { id: string; scheduled_for: string }
+      type ThemeGroup = { theme_name: string; tone: 'educational' | 'motivational' | 'promotional'; posts: PostRef[] }
+      const groups: Record<string, ThemeGroup> = {}
+
+      for (const post of insertedPosts ?? []) {
+        const eff = getEffectiveTheme(post.scheduled_for)
+        const key = `${eff.theme_name}||${eff.tone}`
+        if (!groups[key]) groups[key] = { theme_name: eff.theme_name, tone: eff.tone, posts: [] }
+        groups[key].posts.push(post)
+      }
+
+      // Generate week plan per group, then generate each post with its unique angle
       let batchGenOk = 0
-      for (let i = 0; i < (insertedPosts ?? []).length; i++) {
-        const post  = insertedPosts![i]
-        const angle = weekAngles[i] ?? undefined
-        try {
-          await withSemaphore(() =>
-            generateForPost(supabase, post.id, sched.company_id, sched.id, 'cron/daily-batch', angle)
-          )
-          results.push({ post_id: post.id, status: 'ok' })
-          batchGenOk++
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err)
-          results.push({ post_id: post.id, status: 'error', detail: msg })
-          console.error(`[cron/generate] ✗ Daily batch post ${post.id}: ${msg}`)
+      for (const group of Object.values(groups)) {
+        let groupAngles: { topic: string; hook: string; format: string; keyInsight: string }[] = []
+        if (batchCtx && group.posts.length > 0) {
+          try {
+            groupAngles = await generateWeekPlan(batchCtx, group.theme_name, group.tone, group.posts.length)
+            console.log(`[cron/generate] Plano gerado: ${groupAngles.length} ângulos para tema "${group.theme_name}" (schedule ${sched.id})`)
+          } catch (e) {
+            console.warn('[cron/generate] generateWeekPlan falhou (não fatal):', e)
+          }
+        }
+
+        for (let i = 0; i < group.posts.length; i++) {
+          const post          = group.posts[i]
+          const angle         = groupAngles[i] ?? undefined
+          const themeOverride = { theme_name: group.theme_name, tone: group.tone }
+          try {
+            await withSemaphore(() =>
+              generateForPost(supabase, post.id, sched.company_id, sched.id, 'cron/daily-batch', angle, themeOverride)
+            )
+            results.push({ post_id: post.id, status: 'ok' })
+            batchGenOk++
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err)
+            results.push({ post_id: post.id, status: 'error', detail: msg })
+            console.error(`[cron/generate] ✗ Daily batch post ${post.id}: ${msg}`)
+          }
         }
       }
 
