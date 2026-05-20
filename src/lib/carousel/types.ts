@@ -28,6 +28,7 @@ export interface GenerateCarouselInput {
   tone: 'educational' | 'motivational' | 'promotional'
   slidesCount: number
   publishMode: 'automatic' | 'review'
+  scheduledFor?: string | null  // ISO string, optional
 }
 
 export interface CompanyContext {

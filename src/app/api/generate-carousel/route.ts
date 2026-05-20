@@ -7,7 +7,7 @@ export const maxDuration = 90
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { company_id, schedule_id, theme, tone, slides_count, publish_mode } = body
+    const { company_id, schedule_id, theme, tone, slides_count, publish_mode, scheduled_for } = body
 
     if (!company_id || !theme || !tone || !slides_count) {
       return NextResponse.json(
@@ -17,12 +17,13 @@ export async function POST(req: NextRequest) {
     }
 
     const postId = await generateCarousel({
-      companyId: company_id,
-      scheduleId: schedule_id ?? null,
+      companyId:    company_id,
+      scheduleId:   schedule_id ?? null,
       theme,
       tone,
-      slidesCount: Number(slides_count),
-      publishMode: publish_mode ?? 'review',
+      slidesCount:  Number(slides_count),
+      publishMode:  publish_mode ?? 'review',
+      scheduledFor: scheduled_for ?? null,
     })
 
     return NextResponse.json({ success: true, post_id: postId })

@@ -104,13 +104,14 @@ async function runGeneration(input: GenerateCarouselInput): Promise<string> {
   const { data: post, error: postErr } = await supabase
     .from('posts')
     .insert({
-      company_id: input.companyId,
-      schedule_id: input.scheduleId,
-      content: carousel.slides,
-      slides_html: carousel.slides.map(() => null), // placeholder — we store rendered images
+      company_id:    input.companyId,
+      schedule_id:   input.scheduleId,
+      content:       carousel.slides,
+      slides_html:   carousel.slides.map(() => null),
       slides_images: [],
-      caption: carousel.caption,
+      caption:       carousel.caption,
       status,
+      ...(input.scheduledFor ? { scheduled_for: input.scheduledFor } : {}),
     })
     .select('id')
     .single()

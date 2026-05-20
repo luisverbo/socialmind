@@ -23,14 +23,16 @@ interface Props {
 export default function GeneratePostModal({ open, onClose, themes }: Props) {
   const router = useRouter()
   const { companyId } = useCompany()
-  const [themeId,     setThemeId]     = useState('')
-  const [customTheme, setCustomTheme] = useState('')
-  const [tone,        setTone]        = useState<'educational' | 'motivational' | 'promotional'>('educational')
-  const [slides,      setSlides]      = useState<5 | 7 | 10>(7)
-  const [mode,        setMode]        = useState<'review' | 'automatic'>('review')
-  const [loading,     setLoading]     = useState(false)
-  const [progress,    setProgress]    = useState(0)
-  const [error,       setError]       = useState<string | null>(null)
+  const [themeId,       setThemeId]       = useState('')
+  const [customTheme,   setCustomTheme]   = useState('')
+  const [tone,          setTone]          = useState<'educational' | 'motivational' | 'promotional'>('educational')
+  const [slides,        setSlides]        = useState<5 | 7 | 10>(7)
+  const [mode,          setMode]          = useState<'review' | 'automatic'>('review')
+  const [scheduleDate,  setScheduleDate]  = useState('')  // YYYY-MM-DD
+  const [scheduleTime,  setScheduleTime]  = useState('')  // HH:mm
+  const [loading,       setLoading]       = useState(false)
+  const [progress,      setProgress]      = useState(0)
+  const [error,         setError]         = useState<string | null>(null)
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Reset on open
@@ -41,6 +43,8 @@ export default function GeneratePostModal({ open, onClose, themes }: Props) {
       setTone('educational')
       setSlides(7)
       setMode('review')
+      setScheduleDate('')
+      setScheduleTime('')
       setLoading(false)
       setProgress(0)
       setError(null)
@@ -80,6 +84,16 @@ export default function GeneratePostModal({ open, onClose, themes }: Props) {
     const selectedTheme = themes.find(t => t.id === themeId)
     const themeName = customTheme.trim() || selectedTheme?.theme_name || 'Conteúdo geral'
 
+    // Build scheduledFor ISO string from date + time (Brazil time = UTC-3)
+    let scheduledFor: string | null = null
+    if (scheduleDate && scheduleTime) {
+      // Parse as local Brazil time (UTC-3) → convert to UTC
+      const localDate = new Date(`${scheduleDate}T${scheduleTime}:00`)
+      // Offset: Brazil is UTC-3 (180 minutes behind)
+      const utcDate = new Date(localDate.getTime() + 3 * 60 * 60 * 1000)
+      scheduledFor = utcDate.toISOString()
+    }
+
     setLoading(true)
     setError(null)
     startProgress()
@@ -89,12 +103,13 @@ export default function GeneratePostModal({ open, onClose, themes }: Props) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          company_id:   companyId,
-          schedule_id:  null,
-          theme:        themeName,
+          company_id:    companyId,
+          schedule_id:   null,
+          theme:         themeName,
           tone,
-          slides_count: slides,
-          publish_mode: mode,
+          slides_count:  slides,
+          publish_mode:  mode,
+          scheduled_for: scheduledFor,
         }),
       })
       const data = await res.json()
@@ -274,6 +289,38 @@ export default function GeneratePostModal({ open, onClose, themes }: Props) {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Schedule date/time (optional) */}
+                <div>
+                  <label className="form-label">
+                    Agendar publicação
+                    <span className="text-gray-400 font-normal ml-1">(opcional)</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="date"
+                      value={scheduleDate}
+                      min={new Date().toISOString().split('T')[0]}
+                      onChange={e => setScheduleDate(e.target.value)}
+                      className="input-field text-sm"
+                    />
+                    <input
+                      type="time"
+                      value={scheduleTime}
+                      onChange={e => setScheduleTime(e.target.value)}
+                      className="input-field text-sm"
+                      placeholder="Horário"
+                    />
+                  </div>
+                  {scheduleDate && scheduleTime && (
+                    <p className="text-xs text-[#6C3FE8] mt-1.5">
+                      📅 Agendado para {scheduleDate.split('-').reverse().join('/')} às {scheduleTime} (horário de Brasília)
+                    </p>
+                  )}
+                  {!scheduleDate && !scheduleTime && (
+                    <p className="text-xs text-gray-400 mt-1.5">Sem agendamento — post vai para a fila de aprovação</p>
+                  )}
                 </div>
               </>
             )}
