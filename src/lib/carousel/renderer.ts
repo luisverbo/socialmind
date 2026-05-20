@@ -80,6 +80,31 @@ async function renderLocally(html: string): Promise<Buffer> {
   }
 }
 
+// ─── Logo → base64 data URI (evita requisição externa no Puppeteer) ───────────
+
+async function logoToDataUri(logoUrl: string | undefined): Promise<string | undefined> {
+  if (!logoUrl) return undefined
+  // Já é data URI — não precisa fazer nada
+  if (logoUrl.startsWith('data:')) return logoUrl
+  try {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 8_000)
+    const res = await fetch(logoUrl, { signal: controller.signal })
+    clearTimeout(timer)
+    if (!res.ok) {
+      console.warn(`[renderer] Logo fetch retornou ${res.status} — slide sem logo`)
+      return undefined
+    }
+    const buf  = Buffer.from(await res.arrayBuffer())
+    const mime = res.headers.get('content-type') ?? 'image/png'
+    return `data:${mime};base64,${buf.toString('base64')}`
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.warn(`[renderer] Não foi possível carregar logo (${msg}) — slide sem logo`)
+    return undefined
+  }
+}
+
 // ─── API pública ──────────────────────────────────────────────────────────────
 
 export async function renderSlide(
@@ -87,9 +112,9 @@ export async function renderSlide(
   colors: BrandColors,
   slideIndex: number,
   total: number,
-  logoUrl?: string
+  logoDataUri?: string        // já deve ser data URI, não URL externa
 ): Promise<Buffer> {
-  const html = buildSlideHtml(slide, colors, slideIndex, total, logoUrl)
+  const html = buildSlideHtml(slide, colors, slideIndex, total, logoDataUri)
 
   if (RENDERER_URL && RENDERER_KEY) {
     try {
@@ -108,7 +133,13 @@ export async function renderAllSlides(
   colors: BrandColors,
   logoUrl?: string
 ): Promise<Buffer[]> {
+  // Converte URL externa → base64 UMA vez antes de renderizar todos os slides
+  const logoDataUri = await logoToDataUri(logoUrl)
+  if (logoUrl && logoDataUri) {
+    console.log('[renderer] Logo convertido para base64 com sucesso')
+  }
+
   return Promise.all(
-    slides.map((slide, i) => renderSlide(slide, colors, i + 1, slides.length, logoUrl))
+    slides.map((slide, i) => renderSlide(slide, colors, i + 1, slides.length, logoDataUri))
   )
 }
