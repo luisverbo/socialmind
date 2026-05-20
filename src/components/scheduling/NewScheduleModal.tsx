@@ -244,6 +244,34 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
         allPostIds  = firstPostId ? [firstPostId] : []
       }
 
+      // ── Generate week plan for variety (one unique angle per post) ──
+      let weekPlanAngles: { topic: string; hook: string; format: string; keyInsight: string }[] = []
+      if (allPostIds.length > 1) {
+        try {
+          // Resolve theme name and tone for the plan request
+          const selectedTheme = themes.find(t => t.id === themeId)
+          const planTheme = customTopic.trim() || selectedTheme?.theme_name || 'Conteúdo geral'
+          const planTone  = selectedTheme?.tone ?? 'educational'
+
+          const planRes = await fetch('/api/generate-week-plan', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({
+              company_id: companyId,
+              theme:      planTheme,
+              tone:       planTone,
+              count:      allPostIds.length,
+            }),
+          })
+          if (planRes.ok) {
+            const planData = await planRes.json()
+            weekPlanAngles = planData.plan ?? []
+          }
+        } catch (e) {
+          console.warn('[NewScheduleModal] Week plan falhou (não fatal):', e)
+        }
+      }
+
       // ── Generate first post (awaited) + fire-and-forget the rest ──
       if (firstPostId) {
         // Generate the first post and await it (shows loading screen)
@@ -253,6 +281,7 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
           body:    JSON.stringify({
             post_id:      firstPostId,
             custom_topic: customTopic.trim() || undefined,
+            batch_angle:  weekPlanAngles[0] ?? undefined,
           }),
         })
         if (!res.ok) {
@@ -263,11 +292,13 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
 
       // Generate remaining posts in the background (fire-and-forget)
       if (allPostIds && allPostIds.length > 1) {
-        for (const pid of allPostIds.slice(1)) {
+        for (let i = 1; i < allPostIds.length; i++) {
+          const pid   = allPostIds[i]
+          const angle = weekPlanAngles[i] ?? undefined
           fetch('/api/generate-draft', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ post_id: pid }),
+            body:    JSON.stringify({ post_id: pid, batch_angle: angle }),
           }).catch(e => console.error('[NewScheduleModal] Background gen falhou:', e))
         }
       }

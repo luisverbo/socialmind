@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { generateForPost } from '@/lib/carousel/generate-for-post'
+import { generateWeekPlan } from '@/lib/carousel/generator'
 import { withSemaphore } from '@/lib/carousel/queue'
 
 export const runtime    = 'nodejs'
@@ -162,27 +163,59 @@ export async function GET(req: NextRequest) {
         .update({ last_batch_at: new Date().toISOString() })
         .eq('id', sched.id)
 
-      // Generate the first post of the new batch immediately
-      const firstPost = insertedPosts?.[0]
-      if (firstPost) {
+      // ── Generate week plan for this batch (unique angle per post) ──
+      const { data: schedTheme } = await supabase
+        .from('post_schedules')
+        .select('content_themes(theme_name, tone)')
+        .eq('id', sched.id)
+        .single()
+
+      const ct = schedTheme?.content_themes as { theme_name: string; tone: string } | null
+      const batchTheme = ct?.theme_name ?? 'Conteúdo geral'
+      const batchTone  = (ct?.tone as 'educational' | 'motivational' | 'promotional') ?? 'educational'
+
+      const { data: batchCtx } = await supabase
+        .from('company_context')
+        .select('*')
+        .eq('company_id', sched.company_id)
+        .single()
+
+      let weekAngles: { topic: string; hook: string; format: string; keyInsight: string }[] = []
+      if (batchCtx && insertedPosts && insertedPosts.length > 0) {
         try {
-          await withSemaphore(() =>
-            generateForPost(supabase, firstPost.id, sched.company_id, sched.id, 'cron/daily-batch')
-          )
-          results.push({ post_id: firstPost.id, status: 'ok' })
-          console.log(`[cron/generate] ✓ Novo batch diário iniciado: ${insertedPosts?.length} posts para schedule ${sched.id}`)
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err)
-          results.push({ post_id: firstPost.id, status: 'error', detail: msg })
+          weekAngles = await generateWeekPlan(batchCtx, batchTheme, batchTone, insertedPosts.length)
+          console.log(`[cron/generate] Plano de semana gerado: ${weekAngles.length} ângulos para schedule ${sched.id}`)
+        } catch (e) {
+          console.warn('[cron/generate] generateWeekPlan falhou (não fatal):', e)
         }
       }
+
+      // Generate ALL posts in the batch sequentially with their unique angles
+      let batchGenOk = 0
+      for (let i = 0; i < (insertedPosts ?? []).length; i++) {
+        const post  = insertedPosts![i]
+        const angle = weekAngles[i] ?? undefined
+        try {
+          await withSemaphore(() =>
+            generateForPost(supabase, post.id, sched.company_id, sched.id, 'cron/daily-batch', angle)
+          )
+          results.push({ post_id: post.id, status: 'ok' })
+          batchGenOk++
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err)
+          results.push({ post_id: post.id, status: 'error', detail: msg })
+          console.error(`[cron/generate] ✗ Daily batch post ${post.id}: ${msg}`)
+        }
+      }
+
+      console.log(`[cron/generate] ✓ Batch diário: ${batchGenOk}/${insertedPosts?.length ?? 0} posts gerados para schedule ${sched.id}`)
 
       // Notify client that new batch is ready for review
       const modeLabel = sched.publish_mode === 'review' ? 'para aprovação' : 'para publicação'
       await supabase.from('notifications').insert({
         company_id: sched.company_id,
         type:       'post_ready',
-        message:    `Nova semana de conteúdo diário gerada (${insertedPosts?.length ?? 0} posts ${modeLabel}). Aprove antes que o conteúdo acabe!`,
+        message:    `Nova semana de conteúdo diário gerada (${batchGenOk} posts ${modeLabel}). Aprove antes que o conteúdo acabe!`,
         read:       false,
       })
     } catch (err) {

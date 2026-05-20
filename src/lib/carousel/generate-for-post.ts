@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { generateCarouselContent } from './generator'
+import { generateCarouselContent, type WeekPlanItem } from './generator'
 import { renderAllSlides } from './renderer'
 import type { BrandColors } from './types'
 
@@ -8,7 +8,8 @@ export async function generateForPost(
   postId: string,
   companyId: string,
   scheduleId: string | null,
-  callerLabel = 'generate'
+  callerLabel = 'generate',
+  batchAngle?: WeekPlanItem,
 ): Promise<void> {
   let theme = 'Conteúdo geral'
   let tone: 'educational' | 'motivational' | 'promotional' = 'educational'
@@ -81,7 +82,7 @@ export async function generateForPost(
 
   const logoUrl: string | undefined = ctx.logo_url ?? undefined
 
-  const carousel = await generateCarouselContent(ctx, media ?? [], theme, tone, slidesCount, recentTopics)
+  const carousel = await generateCarouselContent(ctx, media ?? [], theme, tone, slidesCount, recentTopics, batchAngle)
   const buffers  = await renderAllSlides(carousel.slides, brandColors, logoUrl)
   const status   = publishMode === 'review' ? 'waiting' : 'approved'
 
@@ -112,7 +113,7 @@ export async function generateForPost(
   await supabase.from('notifications').insert({
     company_id: companyId,
     type:       'post_ready',
-    message:    `Carrossel "${theme}" gerado com ${carousel.slides.length} slides.`,
+    message:    `Carrossel "${batchAngle?.topic ?? theme}" gerado com ${carousel.slides.length} slides.`,
     read:       false,
   })
 }

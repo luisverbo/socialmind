@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { generateCarouselContent } from '@/lib/carousel/generator'
+import { generateCarouselContent, type WeekPlanItem } from '@/lib/carousel/generator'
 import { renderAllSlides } from '@/lib/carousel/renderer'
 import { withSemaphore } from '@/lib/carousel/queue'
 import type { BrandColors } from '@/lib/carousel/types'
@@ -16,7 +16,8 @@ function adminClient() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { post_id, custom_topic } = await req.json()
+    const { post_id, custom_topic, batch_angle } = await req.json()
+    const batchAngle: WeekPlanItem | undefined = batch_angle ?? undefined
     if (!post_id) {
       return NextResponse.json({ error: 'post_id é obrigatório' }, { status: 400 })
     }
@@ -120,7 +121,7 @@ export async function POST(req: NextRequest) {
         throw new Error(`Créditos insuficientes (${company.credits_balance} disponíveis, ${slidesCount} necessários). Aguarde a renovação ou faça upgrade.`)
       }
 
-      const carousel = await generateCarouselContent(ctx, media ?? [], finalTheme, tone, slidesCount, recentTopics)
+      const carousel = await generateCarouselContent(ctx, media ?? [], finalTheme, tone, slidesCount, recentTopics, batchAngle)
       const buffers = await renderAllSlides(carousel.slides, brandColors, logoUrl)
 
       const status = publishMode === 'review' ? 'waiting' : 'approved'

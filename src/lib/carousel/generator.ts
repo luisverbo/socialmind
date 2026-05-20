@@ -7,34 +7,216 @@ const TONE_MAP = {
   promotional:  'promocional e persuasivo',
 }
 
-const ANGLE_BANK = {
-  educational: [
-    { format: 'liste os erros mais comuns que as pessoas cometem', tone: 'revelador' },
-    { format: 'tutorial passo a passo ultra prático', tone: 'didático' },
-    { format: 'desmistifique uma crença popular do nicho', tone: 'analítico' },
-    { format: 'comparação antes/depois com dados concretos', tone: 'informativo' },
-    { format: 'checklist definitivo para o tema', tone: 'direto' },
-  ],
-  motivational: [
-    { format: 'conte uma história de virada real (situação → ação → resultado)', tone: 'inspirador' },
-    { format: 'momento de decisão — o que separa quem avança de quem fica parado', tone: 'provocativo' },
-    { format: 'mindset: a crença limitante que bloqueia o resultado', tone: 'emocional' },
-    { format: 'resultado possível — mostre o destino antes do caminho', tone: 'aspiracional' },
-    { format: 'lição contraintuitiva aprendida na prática', tone: 'surpreendente' },
-  ],
-  promotional: [
-    { format: 'problema específico → solução clara → resultado esperado', tone: 'persuasivo' },
-    { format: 'antes/depois com prova social e número real', tone: 'convincente' },
-    { format: 'pergunta provocativa que expõe a dor do público', tone: 'urgente' },
-    { format: 'segredo do mercado que a concorrência não conta', tone: 'exclusivo' },
-    { format: 'benefício único e específico com dados surpreendentes', tone: 'focado' },
-  ],
+// ─────────────────────────────────────────────────────────────────────────────
+// WEEK PLAN — generates N distinct angles before any post is written
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface WeekPlanItem {
+  topic:      string  // 3-5 word specific angle
+  hook:       string  // 9-word max hook title
+  format:     string  // content format
+  keyInsight: string  // the ONE thing this post teaches
 }
 
-function pickAngle(tone: 'educational' | 'motivational' | 'promotional') {
-  const angles = ANGLE_BANK[tone]
-  return angles[Math.floor(Math.random() * angles.length)]
+export async function generateWeekPlan(
+  ctx: CompanyContext,
+  theme: string,
+  tone: 'educational' | 'motivational' | 'promotional',
+  count: number,
+): Promise<WeekPlanItem[]> {
+  const toneLabel = TONE_MAP[tone]
+
+  const prompt = `Você é um estrategista de conteúdo sênior para Instagram.
+
+Para o negócio "${ctx.business_name}" (nicho: ${ctx.niche}), crie ${count} conceitos de carrossel COMPLETAMENTE DIFERENTES sobre o tema: "${theme}".
+
+Público-alvo: ${ctx.target_audience ?? 'não informado'}
+Tom: ${toneLabel}
+
+REGRAS ABSOLUTAS:
+1. Cada conceito ataca um ÂNGULO ÚNICO — zero sobreposição de ideia com os outros
+2. Máximo contraste entre os posts: erros × acertos, teórico × prático, básico × avançado, geral × específico
+3. Conteúdo específico para o público informado — nada genérico
+4. Distribua os formatos abaixo (não repita o mesmo formato)
+
+FORMATOS disponíveis:
+- mito-verdade: destruir crença comum com evidência específica do nicho
+- passo-a-passo: como fazer com etapas numeradas e concretas
+- checklist: lista de itens obrigatórios ou proibidos com o porquê
+- estatística: dado surpreendente do nicho + implicações práticas
+- história: caso real ou narrativa de transformação com números
+- alerta: aviso urgente sobre erro que 90% comete
+- antes-depois: contraste entre abordagem errada e a certa com resultados
+- pergunta-resposta: a pergunta que todos têm mas ninguém responde
+
+Retorne SOMENTE JSON válido, sem markdown, sem explicações:
+{
+  "plan": [
+    {
+      "topic": "ângulo específico em 3-5 palavras em português",
+      "hook": "título gancho de até 9 palavras em português (sem ponto final)",
+      "format": "mito-verdade|passo-a-passo|checklist|estatística|história|alerta|antes-depois|pergunta-resposta",
+      "keyInsight": "a UMA coisa única que este post ensina (1 frase direta)"
+    }
+  ]
+}`
+
+  const response = await anthropic.messages.create({
+    model:       'claude-sonnet-4-6',
+    max_tokens:  1200,
+    temperature: 1,
+    messages:    [{ role: 'user', content: prompt }],
+  })
+
+  const text = response.content
+    .filter(b => b.type === 'text')
+    .map(b => (b as { type: 'text'; text: string }).text)
+    .join('').trim()
+
+  const start = text.indexOf('{')
+  const end   = text.lastIndexOf('}')
+  if (start === -1 || end === -1) {
+    console.error('[generateWeekPlan] JSON não encontrado:', text.slice(0, 300))
+    return []
+  }
+
+  try {
+    const parsed = JSON.parse(text.slice(start, end + 1))
+    return ((parsed.plan ?? []) as WeekPlanItem[]).slice(0, count)
+  } catch {
+    console.error('[generateWeekPlan] JSON inválido')
+    return []
+  }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// THEME STRUCTURES — slide-by-slide blueprint per content format
+// ─────────────────────────────────────────────────────────────────────────────
+
+const THEME_STRUCTURES: Record<string, (n: number) => string> = {
+  'myth': (n) => `
+ESTRUTURA OBRIGATÓRIA — Mito e Verdade:
+• Slide 1 (cover)  → Título com o MITO como afirmação chocante ou pergunta provocativa
+• Slide 2          → O MITO: "Todo mundo acredita que..." — escreva com empatia, sem julgamento
+• Slide 3          → POR QUE AS PESSOAS ACREDITAM: razão histórica/psicológica real e específica do nicho
+• Slides 4–${Math.max(4, n - 2)} → A VERDADE: desmonte com dado real, mecanismo concreto, exemplo do nicho
+• Slide ${n - 1}   → O QUE FAZER: substitua o comportamento errado pelo certo (passo a passo curto)
+• Slide ${n} (cta) → "Você acreditava nesse mito? 👇 Marca quem precisa ver isso"
+`,
+  'howto': (n) => `
+ESTRUTURA OBRIGATÓRIA — Passo a Passo:
+• Slide 1 (cover)  → Promessa: resultado específico + prazo realista (ex: "Como X em Y dias")
+• Slide 2          → O PROBLEMA: por que a maioria falha nesse processo — 1 razão específica com dado
+• Slides 3–${Math.max(3, n - 2)} → PASSOS NUMERADOS: cada slide = 1 passo claro com exemplo real + dica concreta
+• Slide ${n - 1}   → ERRO MAIS COMUM: o que estraga os resultados de 90% das pessoas
+• Slide ${n} (cta) → Resultado esperado + "Salva e aplica ainda hoje ✅"
+`,
+  'checklist': (n) => `
+ESTRUTURA OBRIGATÓRIA — Checklist:
+• Slide 1 (cover)  → "X [itens/coisas] que [avatar] deve/não deve [fazer/ter/evitar]" — número real
+• Slide 2          → CONTEXTO: por que essa lista importa — 1 dado ou fato surpreendente e específico
+• Slides 3–${Math.max(3, n - 2)} → ITENS: máx 3 por slide, cada um com o "por quê" em 1 linha curta
+• Slide ${n - 1}   → BÔNUS: o item que 90% ignora e que faz toda a diferença
+• Slide ${n} (cta) → "Salva para não esquecer nenhum item 🔖"
+`,
+  'stats': (n) => `
+ESTRUTURA OBRIGATÓRIA — Dado/Estatística:
+• Slide 1 (cover)  → A estatística chocante em destaque: número + contexto (máx 9 palavras)
+• Slide 2          → O QUE ESSE NÚMERO SIGNIFICA: impacto direto e concreto na vida do avatar
+• Slides 3–${Math.max(3, n - 2)} → CAUSAS/CONSEQUÊNCIAS: cada slide = 1 fator com sub-dados reais
+• Slide ${n - 1}   → O QUE FAZER: ação concreta e imediata baseada nos dados
+• Slide ${n} (cta) → "Compartilha com quem precisa saber disso 📊"
+`,
+  'story': (n) => `
+ESTRUTURA OBRIGATÓRIA — História/Caso:
+• Slide 1 (cover)  → "De [situação ruim] para [resultado] em [prazo]" — concreto e específico
+• Slide 2          → SITUAÇÃO INICIAL: o problema específico — escreva com empatia, com detalhes reais
+• Slide 3          → A DECISÃO: o momento exato em que tudo mudou e por que foi difícil
+• Slides 4–${Math.max(4, n - 2)} → O PROCESSO: o que foi feito, na ordem, com números e detalhes reais
+• Slide ${n - 1}   → O RESULTADO: o que mudou, com números concretos + lição extraída
+• Slide ${n} (cta) → "Qual é sua situação agora? Conta nos comentários 👇"
+`,
+  'warning': (n) => `
+ESTRUTURA OBRIGATÓRIA — Alerta/Aviso:
+• Slide 1 (cover)  → Aviso urgente: "Pare de fazer isso se você quer [resultado]" ou "X erros que custam [consequência]"
+• Slide 2          → O ERRO PRINCIPAL: como ele acontece e por que é comum (sem julgamento)
+• Slides 3–${Math.max(3, n - 2)} → OS ERROS ESPECÍFICOS: cada slide = 1 erro com a consequência real e a alternativa correta
+• Slide ${n - 1}   → A RAIZ DO PROBLEMA: por que tantos cometem esses erros (crença limitante ou falta de informação)
+• Slide ${n} (cta) → "Salva para não cometer esses erros 🔖 E manda pra quem precisa ver"
+`,
+  'before-after': (n) => `
+ESTRUTURA OBRIGATÓRIA — Antes/Depois:
+• Slide 1 (cover)  → "Antes vs Depois: a diferença que muda tudo em [tema]"
+• Slide 2          → O "ANTES": como a maioria faz — específico, sem julgamento, reconhecível
+• Slides 3–${Math.max(3, n - 2)} → AS MUDANÇAS: cada slide compara 1 comportamento (Antes: X | Depois: Y) com resultado concreto
+• Slide ${n - 1}   → O RESULTADO DO "DEPOIS": números reais, diferença visível
+• Slide ${n} (cta) → "Em qual estágio você está agora? Antes ou Depois? Conta nos comentários"
+`,
+  'qa': (n) => `
+ESTRUTURA OBRIGATÓRIA — Pergunta e Resposta:
+• Slide 1 (cover)  → A pergunta que todos têm mas ninguém responde claramente
+• Slide 2          → POR QUE É CONFUSO: o que gera dúvida e por que as respostas comuns estão erradas
+• Slides 3–${Math.max(3, n - 2)} → AS RESPOSTAS: cada slide responde 1 aspecto da pergunta com dados + exemplo
+• Slide ${n - 1}   → A RESPOSTA DEFINITIVA: síntese clara + regra geral que nunca falha
+• Slide ${n} (cta) → "Que outras dúvidas você tem sobre [tema]? Pergunta nos comentários 👇"
+`,
+}
+
+function detectThemeStructure(theme: string, slidesCount: number): string {
+  const t = theme.toLowerCase()
+  // Match the format keywords from WeekPlanItem
+  if (/mito.verdade|mito-verdade|mito e verdade|mitos e verdades|desmistif|falsa crença|mentira|mito/i.test(t))
+    return THEME_STRUCTURES.myth(slidesCount)
+  if (/passo.a.passo|como (fazer|criar|usar|montar|vender|começar|aplicar)|tutorial|guia prático/i.test(t))
+    return THEME_STRUCTURES.howto(slidesCount)
+  if (/checklist|lista de|itens (que|para)|coisas que|não (faça|deve|fazer)/i.test(t))
+    return THEME_STRUCTURES.checklist(slidesCount)
+  if (/estatística|em números|dado (sur|choc)|pesquisa (mostrou|revela)|taxa de|% dos/i.test(t))
+    return THEME_STRUCTURES.stats(slidesCount)
+  if (/história|caso real|case de|depoimento|transformação|jornada de|de .* para/i.test(t))
+    return THEME_STRUCTURES.story(slidesCount)
+  if (/alerta|erro.*(mais|comum)|pare de|cuidado com|riscos de|armadilha/i.test(t))
+    return THEME_STRUCTURES.warning(slidesCount)
+  if (/antes.?depois|antes vs|antes ×|abordagem (errada|certa)/i.test(t))
+    return THEME_STRUCTURES['before-after'](slidesCount)
+  if (/pergunta.?resposta|dúvida sobre|faq|o que é|por que (é|acontece)|como (saber|identificar)/i.test(t))
+    return THEME_STRUCTURES.qa(slidesCount)
+  return ''
+}
+
+// Detect format from WeekPlanItem.format string
+function formatToStructure(format: string, slidesCount: number): string {
+  const f = format.toLowerCase()
+  if (f.includes('mito'))        return THEME_STRUCTURES.myth(slidesCount)
+  if (f.includes('passo'))       return THEME_STRUCTURES.howto(slidesCount)
+  if (f.includes('checklist'))   return THEME_STRUCTURES.checklist(slidesCount)
+  if (f.includes('estatística') || f.includes('statistic')) return THEME_STRUCTURES.stats(slidesCount)
+  if (f.includes('história') || f.includes('histor'))       return THEME_STRUCTURES.story(slidesCount)
+  if (f.includes('alerta') || f.includes('warning'))        return THEME_STRUCTURES.warning(slidesCount)
+  if (f.includes('antes'))       return THEME_STRUCTURES['before-after'](slidesCount)
+  if (f.includes('pergunta') || f.includes('resposta') || f.includes('q-and-a')) return THEME_STRUCTURES.qa(slidesCount)
+  return ''
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HOOK FORMULAS — slide 1 blueprints
+// ─────────────────────────────────────────────────────────────────────────────
+
+const HOOK_FORMULAS = `FÓRMULAS DE GANCHO PARA O SLIDE 1 — use a que melhor serve ao ângulo:
+1. ERRO NUMÉRICO    → "X erros que [avatar] comete e não percebe"
+2. NEGAÇÃO          → "Por que você NÃO consegue [resultado] mesmo fazendo [esforço]"
+3. SEGREDO          → "O que os [referências do nicho] fazem diferente e nunca contam"
+4. AVISO URGENTE    → "Para tudo se você ainda [comportamento comum do avatar]"
+5. DADO CHOCANTE    → "X% dos [avatar] [fato surpreendente] — você é um deles?"
+6. CONTRA-INTUITIVO → "A estratégia que parece errada mas [resultado concreto]"
+7. ANTES/DEPOIS     → "De [situação ruim] para [resultado desejado] em [prazo real]"
+8. PROVOCAÇÃO       → "Você está [fazendo X] errado. E você nem sabe disso."
+
+OBRIGATÓRIO: máx 9 palavras, sem ponto final, cria curiosidade SEM revelar a resposta.`
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SYSTEM PROMPT
+// ─────────────────────────────────────────────────────────────────────────────
 
 function buildSystemPrompt(ctx: CompanyContext, mediaItems: MediaItem[]): string {
   const mediaSection = mediaItems.length > 0
@@ -71,51 +253,42 @@ Não "empreendedores em geral" — mas "dona de ateliê que vende pelo WhatsApp 
 Se você não consegue visualizar quem é essa pessoa, o avatar está genérico demais.
 
 ════════════════════════════════════════
-REGRA Nº 2 — TESTE DE ESPECIFICIDADE DOS BULLETS
+REGRA Nº 2 — TESTE DE ESPECIFICIDADE
 ════════════════════════════════════════
 
-Antes de escrever qualquer bullet, aplique este teste:
-"Este bullet poderia aparecer em um post sobre OUTRO assunto qualquer?"
+Antes de qualquer bullet ou frase, pergunte:
+"Isso poderia aparecer em um post sobre OUTRO assunto qualquer?"
 
-Se SIM → o bullet é genérico. DESCARTE e reescreva.
-Se NÃO → o bullet é específico. APROVADO.
+Se SIM → é genérico. DESCARTE e reescreva com dado, número ou mecanismo específico.
+Se NÃO → está aprovado.
 
-CONTEÚDO AUTOMATICAMENTE REPROVADO (qualquer variação dessas frases é proibida):
+FRASES AUTOMATICAMENTE REPROVADAS:
 ✗ "Seja consistente nas redes sociais"
 ✗ "Conheça bem o seu público-alvo"
 ✗ "Invista em marketing digital"
 ✗ "Tenha uma presença online forte"
 ✗ "Engaje com seus seguidores"
-✗ "Use as redes sociais a seu favor"
 ✗ "Crie conteúdo de valor"
 ✗ "Seja autêntico"
 ✗ "Construa sua autoridade"
-→ Escrever qualquer coisa parecida = falha total na missão.
+→ Qualquer variação = falha total.
 
-BULLETS QUE PASSAM NO TESTE (exemplos do nível exigido):
-✓ "Reels com áudio original têm alcance 2,3x maior que os com música — use sua própria voz"
-✓ "O algoritmo do Instagram em 2026 prioriza tempo de tela: faça o primeiro slide durar 3+ segundos"
-✓ "Salvar um post vale mais que 10 curtidas para o algoritmo — finalize sempre pedindo para salvar"
-✓ "Perfis com bio com palavra-chave no nome aparecem nas buscas — coloque seu serviço no nome"
+BULLETS QUE PASSAM NO TESTE (nível exigido):
+✓ "Reels com áudio original têm alcance 2,3x maior — use sua própria voz"
+✓ "O algoritmo em 2026 prioriza tempo de tela: faça o slide 1 durar 3+ segundos"
+✓ "Salvar vale mais que 10 curtidas pro algoritmo — finalize pedindo para salvar"
+✓ "Bio com palavra-chave no nome aparece nas buscas — coloque seu serviço no nome"
 
 ════════════════════════════════════════
 REGRA Nº 3 — TÍTULOS QUE PARAM O SCROLL
 ════════════════════════════════════════
 
-O título do slide 1 decide se o post vira viral ou some.
+REPROVADOS:
+✗ "Dicas de [tema]" / "Saiba mais sobre [tema]" / "Como melhorar [coisa vaga]"
 
-TÍTULOS REPROVADOS (genéricos, não geram clique):
-✗ "Dicas de [tema]"
-✗ "Saiba mais sobre [tema]"
-✗ "Como melhorar [coisa vaga]"
-✗ "Tudo sobre [tema]"
-✗ "[Tema]: o guia completo"
-
-TÍTULOS APROVADOS (criam urgência ou curiosidade irresistível):
+APROVADOS:
 ✓ "O erro que 9/10 [profissão] cometem e não percebem"
 ✓ "Por que você não vende mesmo tendo [X] seguidores"
-✓ "Pare de fazer isso se quiser [resultado específico]"
-✓ "O que os [concorrentes de sucesso] fazem que você não faz"
 ✓ "Como [resultado concreto] em [prazo real] sem [obstáculo comum]"
 
 ════════════════════════════════════════
@@ -133,74 +306,88 @@ FORMATO DE SAÍDA
 Retorne SOMENTE JSON válido, sem markdown, sem explicações.`
 }
 
-const HOOK_FORMULAS = `FÓRMULAS DE GANCHO PARA O SLIDE 1 — escolha UMA, adapte ao tema e ao avatar:
-1. ERRO NUMÉRICO    → "X erros que [avatar] comete e não percebe"
-2. NEGAÇÃO          → "Por que você NÃO consegue [resultado] mesmo fazendo [esforço]"
-3. SEGREDO          → "O que os [referências do nicho] fazem diferente e nunca contam"
-4. AVISO URGENTE    → "Para tudo se você ainda [comportamento comum do avatar]"
-5. DADO CHOCANTE    → "X% dos [avatar] [fato surpreendente] — você é um deles?"
-6. CONTRA-INTUITIVO → "A estratégia que parece errada mas [resultado concreto]"
-7. ANTES/DEPOIS     → "De [situação ruim] para [resultado desejado] em [prazo real]"
-8. PROVOCAÇÃO       → "Você está [fazendo X] errado. E você nem sabe disso."
-
-OBRIGATÓRIO: máx 9 palavras, sem ponto final, cria curiosidade SEM revelar a resposta.`
+// ─────────────────────────────────────────────────────────────────────────────
+// USER PROMPT
+// ─────────────────────────────────────────────────────────────────────────────
 
 function buildUserPrompt(
   theme: string,
   tone: 'educational' | 'motivational' | 'promotional',
   slidesCount: number,
   mediaItems: MediaItem[],
-  recentTopics: string[] = []
+  recentTopics: string[] = [],
+  batchAngle?: WeekPlanItem,
 ): string {
   const imageUrls = mediaItems.filter(m => m.url).slice(0, 5).map(m => m.url)
   const hasImages = imageUrls.length > 0
   const seed      = `${new Date().toISOString().slice(0, 16)}-${Math.random().toString(36).slice(2, 7)}`
-  const angle     = pickAngle(tone)
 
-  // Specialist mode: theme longer than 25 chars or contains action verbs = specific topic chosen by user
-  const isSpecificTopic = theme.length > 25 || /como|por que|erro|dica|estratégia|guia|passo|secret|reveal/i.test(theme)
-
-  const specialistBlock = isSpecificTopic
-    ? `\nMODO ESPECIALISTA ATIVADO:
-Você é o maior especialista do Brasil no assunto: "${theme}"
-Traga insights que 90% dos profissionais do nicho não conhecem.
-Cada bullet deve conter algo que surpreenda — dados reais, números, mecanismos específicos.
-NÃO é permitido nenhum conselho óbvio ou genérico neste post.\n`
-    : ''
-
+  // ── Anti-repetition block ──
   const recentSection = recentTopics.length > 0
     ? `\nPOSTS ANTERIORES — evite qualquer semelhança de ideia, título ou ângulo:\n${recentTopics.map((t, i) => `${i + 1}. ${t}`).join('\n')}\n`
+    : ''
+
+  // ── Angle block — batch angle takes full priority ──
+  let angleBlock: string
+  let structureBlock: string
+
+  if (batchAngle) {
+    angleBlock = `
+ÂNGULO EXCLUSIVO DESTE POST (obrigatório — não desvie em nenhum slide):
+• Tópico: "${batchAngle.topic}"
+• Título do slide 1: "${batchAngle.hook}" (use exatamente este como base, pode adaptar levemente)
+• Formato: ${batchAngle.format}
+• Insight central: "${batchAngle.keyInsight}"
+
+Este post existe para ensinar APENAS o insight acima. Cada slide converge para essa ideia.
+Não misture com outros ângulos do tema. Seja profundo neste ângulo específico.
+`
+    structureBlock = formatToStructure(batchAngle.format, slidesCount)
+      || detectThemeStructure(batchAngle.topic, slidesCount)
+      || detectThemeStructure(theme, slidesCount)
+  } else {
+    const specificTopic = theme.length > 20 || /como|por que|erro|dica|estratégia|guia|passo|secret/i.test(theme)
+    angleBlock = specificTopic
+      ? `\nMODO ESPECIALISTA ATIVADO:
+Você é o maior especialista do Brasil no assunto: "${theme}"
+Traga insights que 90% dos profissionais do nicho não conhecem.
+Cada bullet deve conter algo que surpreenda — dados reais, números, mecanismos específicos.\n`
+      : ''
+    structureBlock = detectThemeStructure(theme, slidesCount)
+  }
+
+  const structureSection = structureBlock
+    ? `\n${structureBlock}`
     : ''
 
   return `[ID: ${seed}]
 
 Crie um carrossel com ${slidesCount} slides.
-Assunto: "${theme}"
+Assunto geral: "${theme}"
 Tom: ${TONE_MAP[tone]}
-${specialistBlock}${recentSection}
-ÂNGULO OBRIGATÓRIO: ${angle.format} — tom ${angle.tone}
-Use este ângulo do primeiro ao último slide. Não desvie.
+${angleBlock}${recentSection}${structureSection}
+${!structureBlock ? HOOK_FORMULAS : ''}
 
-${HOOK_FORMULAS}
-
-ESTRUTURA:
+ESTRUTURA DOS SLIDES:
 
 SLIDE 1 — CAPA (type: "cover")
-- title: gancho (máx 9 palavras, sem ponto final) — escolha UMA fórmula acima
-- subtitle: 2-3 palavras da categoria em MAIÚSCULAS (ex: "INSTAGRAM 2025")
-- body: 1 frase que amplifica a curiosidade do título (máx 12 palavras)
+- title: gancho (máx 9 palavras, sem ponto final)${batchAngle ? ` — use "${batchAngle.hook}" como base` : ''}
+- subtitle: 2-3 palavras da categoria em MAIÚSCULAS
+- body: 1 frase que amplifica a curiosidade (máx 12 palavras)
 
 SLIDES 2 a ${slidesCount - 1} — CONTEÚDO (type: "content")
-Cada slide = 1 subtópico específico do assunto.
-- title: máx 6 palavras — aprofunda o ângulo, nunca repete o tema genérico
+${structureBlock
+    ? `Siga rigorosamente a estrutura definida acima.`
+    : `Cada slide = 1 subtópico específico do assunto.`}
+- title: máx 6 palavras — específico, nunca genérico
 - bullets: exatamente 3 pontos — cada um DEVE passar no Teste de Especificidade
-- body: 1 frase de contexto apenas se agregar algo novo (opcional)
+- body: 1 frase de contexto adicional (opcional, apenas se agregar algo novo)
 
 SLIDE ${slidesCount} — CTA (type: "cta")
 - title: frase de encerramento impactante (não use "conclusão" nem "resumo")
 - body: benefício imediato e concreto de agir agora
-- cta: chamada para ação ("Salva e aplica hoje!", "Manda pra quem precisa ver!")
-- subtitle: instrução de engajamento ("Conta nos comentários: qual você vai testar?")
+- cta: chamada para ação específica e emocional
+- subtitle: instrução de engajamento nos comentários
 ${hasImages ? `\nImagens disponíveis (inclua com type "image" quando fizer sentido):\n${imageUrls.map((u, i) => `${i + 1}. ${u}`).join('\n')}\n` : ''}
 Retorne SOMENTE este JSON:
 {
@@ -213,20 +400,25 @@ Retorne SOMENTE este JSON:
 }`
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN EXPORT — generateCarouselContent
+// ─────────────────────────────────────────────────────────────────────────────
+
 export async function generateCarouselContent(
   ctx: CompanyContext,
   mediaItems: MediaItem[],
   theme: string,
   tone: 'educational' | 'motivational' | 'promotional',
   slidesCount: number,
-  recentTopics: string[] = []
+  recentTopics: string[] = [],
+  batchAngle?: WeekPlanItem,
 ): Promise<CarouselContent> {
   const systemPrompt = buildSystemPrompt(ctx, mediaItems)
-  const userPrompt   = buildUserPrompt(theme, tone, slidesCount, mediaItems, recentTopics)
+  const userPrompt   = buildUserPrompt(theme, tone, slidesCount, mediaItems, recentTopics, batchAngle)
 
   const response = await anthropic.messages.create({
-    model:       'claude-haiku-4-5-20251001',
-    max_tokens:  2500,
+    model:       'claude-sonnet-4-6',   // ← upgraded from haiku
+    max_tokens:  3000,
     temperature: 1,
     system: [
       {
