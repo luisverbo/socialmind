@@ -206,140 +206,172 @@ export default function ApprovalQueue({ companyId, onCountChange }: Props) {
         />
       )}
 
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-gray-400">{posts.length} post{posts.length !== 1 ? 's' : ''} aguardando aprovação</p>
-        <button
-          onClick={approveAll}
-          disabled={processing === 'all'}
-          className="flex items-center gap-2 bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all"
-        >
-          <CheckSquare size={15} />
-          Aprovar todos
-        </button>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
+        <p className="text-sm text-gray-400">
+          {posts.length} post{posts.length !== 1 ? 's' : ''} aguardando aprovação
+        </p>
+        {posts.length > 1 && (
+          <button
+            onClick={approveAll}
+            disabled={processing === 'all'}
+            className="flex items-center gap-1.5 border border-green-300 text-green-700 bg-green-50 hover:bg-green-100 disabled:opacity-60 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
+          >
+            {processing === 'all' ? <div className="w-3 h-3 spinner" /> : <CheckSquare size={13} />}
+            Aprovar todos ({posts.length})
+          </button>
+        )}
       </div>
 
-      <div className="space-y-4">
+      {/* Grid of post cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {posts.map(post => {
           const schedule = post.post_schedules as { content_themes?: { theme_name: string; tone: string } | null; type: string } | null
           const theme = schedule?.content_themes
           const isProcessing = processing === post.id
+          const hasImages = post.slides_images && post.slides_images.length > 0
+          const isGenerating = !hasImages && (!post.content || post.content.length === 0)
+          const coverImage = hasImages ? post.slides_images[0] : null
 
           return (
-            <div key={post.id} className="card overflow-hidden">
-              {/* Post header */}
-              <div className="flex items-start justify-between px-5 py-4 border-b border-gray-100">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-amber-400" />
-                    <span className="text-sm font-semibold text-[#1A1A2E]">
-                      {theme?.theme_name ?? 'Post sem tema'}
+            <div key={post.id} className="card overflow-hidden flex flex-col">
+              {/* Cover image — large, clickable */}
+              <button
+                onClick={() => hasImages
+                  ? setPreviewModal({ postId: post.id, images: post.slides_images, index: 0 })
+                  : undefined
+                }
+                disabled={!hasImages}
+                className="relative aspect-square bg-gray-100 w-full overflow-hidden group"
+              >
+                {coverImage ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={coverImage}
+                      alt="Capa do post"
+                      className="w-full h-full object-cover"
+                    />
+                    {/* Slide count badge */}
+                    <span className="absolute top-2 right-2 bg-black/60 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                      {post.slides_images.length} slides
                     </span>
-                    {theme?.tone && (
-                      <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md border border-gray-200">
-                        {TONE_LABEL[theme.tone] ?? theme.tone}
-                      </span>
-                    )}
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
+                      <div className="opacity-0 group-hover:opacity-100 transition-all bg-white rounded-xl px-4 py-2 flex items-center gap-2 text-sm font-semibold text-[#1A1A2E]">
+                        <Expand size={14} />
+                        Ver todos os slides
+                      </div>
+                    </div>
+                  </>
+                ) : isGenerating ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                    <div className="w-8 h-8 spinner" />
+                    <p className="text-xs text-gray-400">Gerando imagens...</p>
                   </div>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <Clock size={12} className="text-gray-400" />
-                    <span className="text-xs text-gray-400">{formatDate(post.scheduled_for)}</span>
+                ) : (
+                  // Has content but no images yet
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4">
+                    <div className="w-8 h-8 spinner" />
+                    <p className="text-xs text-gray-400 text-center">Renderizando slides...</p>
                   </div>
+                )}
+              </button>
+
+              {/* Thumbnail strip (if multiple slides) */}
+              {hasImages && post.slides_images.length > 1 && (
+                <div className="flex gap-1 px-3 pt-3 overflow-x-auto">
+                  {post.slides_images.slice(0, 6).map((url, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setPreviewModal({ postId: post.id, images: post.slides_images, index: i })}
+                      className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden border border-gray-100 hover:border-[#6C3FE8] transition-colors"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={url} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                  {post.slides_images.length > 6 && (
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-xs text-gray-400 font-medium">
+                      +{post.slides_images.length - 6}
+                    </div>
+                  )}
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => startEdit(post)}
-                    disabled={isProcessing}
-                    className="p-2 text-gray-400 hover:text-[#6C3FE8] hover:bg-[#F8F7FF] rounded-lg transition-all"
-                    title="Editar legenda"
-                  >
-                    <Edit3 size={15} />
-                  </button>
-                  <button
-                    onClick={() => reject(post.id)}
-                    disabled={isProcessing}
-                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                    title="Rejeitar"
-                  >
-                    <XCircle size={15} />
-                  </button>
-                  <button
-                    onClick={() => approve(post.id)}
-                    disabled={isProcessing}
-                    className="flex items-center gap-1.5 bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-all"
-                  >
-                    {isProcessing ? (
-                      <div className="w-3 h-3 spinner" />
-                    ) : <CheckCircle size={14} />}
-                    Aprovar
-                  </button>
+              )}
+
+              {/* Post info */}
+              <div className="px-4 pt-3 pb-1">
+                <p className="text-sm font-semibold text-[#1A1A2E] line-clamp-1">
+                  {post.content?.[0]?.title ?? theme?.theme_name ?? 'Post sem tema'}
+                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <Clock size={11} className="text-gray-400" />
+                  <span className="text-xs text-gray-400">{formatDate(post.scheduled_for)}</span>
+                  {theme?.tone && (
+                    <span className="text-xs bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-md">
+                      {TONE_LABEL[theme.tone] ?? theme.tone}
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* Slides preview */}
-              {post.slides_images && post.slides_images.length > 0 ? (
-                <div className="px-5 py-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-xs text-gray-400 font-medium">
-                      Preview dos slides ({post.slides_images.length})
-                    </p>
-                    <button
-                      onClick={() => setPreviewModal({ postId: post.id, images: post.slides_images, index: 0 })}
-                      className="flex items-center gap-1 text-xs text-[#6C3FE8] hover:text-[#5830cc] font-medium transition-colors"
-                    >
-                      <Expand size={11} />
-                      Ampliar
+              {/* Caption preview */}
+              {post.caption && editingId !== post.id && (
+                <p className="px-4 py-1 text-xs text-gray-400 line-clamp-2 leading-relaxed">
+                  {post.caption}
+                </p>
+              )}
+
+              {/* Caption editor */}
+              {editingId === post.id && (
+                <div className="px-4 pb-3 pt-2 border-t border-gray-100 mt-2">
+                  <textarea
+                    value={editCaption}
+                    onChange={e => setEditCaption(e.target.value)}
+                    rows={3}
+                    className="textarea-field text-xs"
+                    placeholder="Legenda do Instagram..."
+                  />
+                  <div className="flex justify-end gap-2 mt-2">
+                    <button onClick={() => setEditingId(null)}
+                      className="text-gray-400 hover:text-gray-600 text-xs px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                      <X size={12} /> Cancelar
                     </button>
-                  </div>
-                  <div className="flex gap-2 overflow-x-auto pb-1">
-                    {post.slides_images.map((url, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setPreviewModal({ postId: post.id, images: post.slides_images, index: i })}
-                        className="flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border border-gray-200 bg-gray-100 relative hover:border-[#6C3FE8] hover:shadow-md transition-all group"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={url}
-                          alt={`Slide ${i + 1}`}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                        <span className="absolute bottom-1 right-1.5 text-[10px] font-bold text-white drop-shadow bg-black/30 rounded px-1">
-                          {i + 1}
-                        </span>
-                        <div className="absolute inset-0 bg-[#6C3FE8]/0 group-hover:bg-[#6C3FE8]/10 transition-all flex items-center justify-center">
-                          <Expand size={16} className="text-white opacity-0 group-hover:opacity-100 drop-shadow transition-all" />
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : post.content && post.content.length > 0 ? (
-                <div className="px-5 py-4">
-                  <p className="text-xs text-gray-400 font-medium mb-3">Conteúdo dos slides</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-                    {post.content.map((slide, i) => (
-                      <div key={i} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                        <p className="text-xs text-gray-400 font-medium mb-1">Slide {i + 1}</p>
-                        {slide.title && <p className="text-sm font-semibold text-[#1A1A2E] line-clamp-2">{slide.title}</p>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="px-5 py-4">
-                  <div className="flex items-center gap-3 text-gray-400">
-                    <div className="flex gap-1.5">
-                      {[...Array(5)].map((_, i) => (
-                        <div key={i} className="w-12 h-16 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center">
-                          <span className="text-gray-300 text-xs">{i + 1}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-xs">Slides serão gerados pela IA</p>
+                    <button onClick={() => saveEdit(post.id)}
+                      className="bg-[#6C3FE8] hover:bg-[#5830cc] text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-all flex items-center gap-1">
+                      <Save size={12} /> Salvar
+                    </button>
                   </div>
                 </div>
               )}
+
+              {/* Action buttons */}
+              <div className="flex gap-2 px-4 pb-4 pt-2 mt-auto">
+                <button
+                  onClick={() => reject(post.id)}
+                  disabled={isProcessing}
+                  className="flex-1 flex items-center justify-center gap-1.5 border border-red-200 text-red-500 hover:bg-red-50 text-xs font-semibold py-2.5 rounded-xl transition-all disabled:opacity-50"
+                >
+                  <XCircle size={14} />
+                  Rejeitar
+                </button>
+                <button
+                  onClick={() => startEdit(post)}
+                  disabled={isProcessing}
+                  className="w-10 flex items-center justify-center border border-gray-200 text-gray-400 hover:text-[#6C3FE8] hover:border-[#6C3FE8]/30 rounded-xl transition-all"
+                  title="Editar legenda"
+                >
+                  <Edit3 size={14} />
+                </button>
+                <button
+                  onClick={() => approve(post.id)}
+                  disabled={isProcessing || (!hasImages && isGenerating)}
+                  className="flex-1 flex items-center justify-center gap-1.5 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white text-xs font-semibold py-2.5 rounded-xl transition-all"
+                >
+                  {isProcessing ? <div className="w-3 h-3 spinner" /> : <CheckCircle size={14} />}
+                  Aprovar
+                </button>
+              </div>
 
               {/* Caption editor */}
               {editingId === post.id ? (

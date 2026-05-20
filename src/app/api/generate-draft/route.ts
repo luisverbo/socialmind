@@ -53,17 +53,24 @@ export async function POST(req: NextRequest) {
     if (post.schedule_id) {
       const { data: schedule } = await supabase
         .from('post_schedules')
-        .select('publish_mode, content_themes(theme_name, tone, slides_count)')
+        .select('publish_mode, slides_count, content_themes(theme_name, tone, slides_count)')
         .eq('id', post.schedule_id)
         .single()
 
       if (schedule) {
         publishMode = schedule.publish_mode ?? 'review'
+        // Use schedule.slides_count first (set directly on schedule), fallback to content_theme
+        if (schedule.slides_count && schedule.slides_count !== 7) {
+          slidesCount = schedule.slides_count
+        }
         const ct = schedule.content_themes as unknown as { theme_name: string; tone: string; slides_count: number } | null
         if (ct) {
           theme = ct.theme_name
           tone = ct.tone as typeof tone
-          slidesCount = ct.slides_count ?? 7
+          // Only use theme's slides_count if schedule doesn't have one explicitly set
+          if (!schedule.slides_count || schedule.slides_count === 7) {
+            slidesCount = ct.slides_count ?? 7
+          }
         }
       }
     }

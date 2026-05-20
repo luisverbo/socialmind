@@ -141,6 +141,8 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
         repeat:       type === 'recurring' || type === 'daily',
       }
 
+      schedulePayload.slides_count = slidesCount   // always save slides_count
+
       if (type === 'daily') {
         schedulePayload.posts_per_day   = postsPerDay
         schedulePayload.scheduled_times = dailyTimes.map(t => t + ':00')
@@ -164,6 +166,7 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
 
       // ── Create first batch of draft posts ─────────────────────────
       let firstPostId: string | null = null
+      let allPostIds: string[] = []
 
       if (type === 'daily') {
         // Generate first week (7 days) of posts, respecting duration_days
@@ -196,6 +199,7 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
           .select('id, scheduled_for')
           .order('scheduled_for', { ascending: true })
         firstPostId = insertedPosts?.[0]?.id ?? null
+        allPostIds  = (insertedPosts ?? []).map(p => p.id)
 
         // Mark batch as generated
         await supabase.from('post_schedules')
@@ -219,6 +223,7 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
             .select('id, scheduled_for')
             .order('scheduled_for', { ascending: true })
           firstPostId = insertedPosts?.[0]?.id ?? null
+          allPostIds  = (insertedPosts ?? []).map(p => p.id)
         }
       } else {
         const dt = new Date(`${scheduledDate}T${scheduledTime}:00`)
@@ -236,10 +241,12 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
           .select('id')
           .single()
         firstPostId = insertedPost?.id ?? null
+        allPostIds  = firstPostId ? [firstPostId] : []
       }
 
-      // ── Generate the first post immediately ───────────────────────
+      // ── Generate first post (awaited) + fire-and-forget the rest ──
       if (firstPostId) {
+        // Generate the first post and await it (shows loading screen)
         const res = await fetch('/api/generate-draft', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -250,7 +257,18 @@ export default function NewScheduleModal({ companyId, onClose, onCreated }: Prop
         })
         if (!res.ok) {
           const err = await res.json().catch(() => ({}))
-          console.error('[NewScheduleModal] Geração falhou:', err)
+          console.error('[NewScheduleModal] Geração do 1º post falhou:', err)
+        }
+      }
+
+      // Generate remaining posts in the background (fire-and-forget)
+      if (allPostIds && allPostIds.length > 1) {
+        for (const pid of allPostIds.slice(1)) {
+          fetch('/api/generate-draft', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ post_id: pid }),
+          }).catch(e => console.error('[NewScheduleModal] Background gen falhou:', e))
         }
       }
 

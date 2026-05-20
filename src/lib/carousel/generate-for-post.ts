@@ -18,17 +18,18 @@ export async function generateForPost(
   if (scheduleId) {
     const { data: schedule } = await supabase
       .from('post_schedules')
-      .select('publish_mode, content_themes(theme_name, tone, slides_count)')
+      .select('publish_mode, slides_count, content_themes(theme_name, tone, slides_count)')
       .eq('id', scheduleId)
       .single()
 
     if (schedule) {
       publishMode = schedule.publish_mode ?? 'review'
+      if (schedule.slides_count) slidesCount = schedule.slides_count
       const ct = schedule.content_themes as unknown as { theme_name: string; tone: string; slides_count: number } | null
       if (ct) {
         theme = ct.theme_name
         tone = ct.tone as typeof tone
-        slidesCount = ct.slides_count ?? 7
+        if (!schedule.slides_count) slidesCount = ct.slides_count ?? 7
       }
     }
   }
