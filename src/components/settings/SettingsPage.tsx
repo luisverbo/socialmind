@@ -7,11 +7,21 @@ import InstagramConnect from './InstagramConnect'
 import RecentPublications from './RecentPublications'
 import BrandSettings from './BrandSettings'
 import BusinessSettings from './BusinessSettings'
+import AdminCreditsPanel from './AdminCreditsPanel'
 import { Settings, BarChart3, Zap } from 'lucide-react'
 import type { Company } from '@/types/scheduling'
 
+const ADMIN_EMAILS = ['luisverbo@gmail.com']
+
 export default function SettingsPage() {
   const { companyId, company, loading: companyLoading } = useCompany()
+  const [userEmail, setUserEmail] = useState<string | null>(null)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserEmail(data.user?.email ?? null)
+    })
+  }, [])
   const [monthStats, setMonthStats] = useState<{ published: number; failed: number } | null>(null)
 
   useEffect(() => {
@@ -134,6 +144,14 @@ export default function SettingsPage() {
             <span>Renova em {new Date(company.reset_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</span>
           </div>
         </div>
+      )}
+
+      {/* Admin panel — only for admin emails */}
+      {userEmail && ADMIN_EMAILS.includes(userEmail) && (
+        <section>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Administração</h2>
+          <AdminCreditsPanel />
+        </section>
       )}
 
       {/* Recent publications */}
