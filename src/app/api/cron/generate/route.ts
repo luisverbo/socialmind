@@ -189,7 +189,7 @@ export async function GET(req: NextRequest) {
       })
 
       // Fetch all theme names we'll need from the weekly map
-      const weeklyThemeIds = [...new Set(Object.values(weeklyDowMap).map(v => v.theme_id))]
+      const weeklyThemeIds = Array.from(new Set(Object.values(weeklyDowMap).map(v => v.theme_id)))
       const weeklyThemeCache: Record<string, { theme_name: string; tone: 'educational' | 'motivational' | 'promotional' }> = {}
       if (weeklyThemeIds.length > 0) {
         const { data: themeRows } = await supabase
