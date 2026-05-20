@@ -12,9 +12,14 @@ function adminClient() {
 }
 
 export async function GET(req: NextRequest) {
-  // Verify Vercel Cron secret
+  // Accept secret via Authorization header OR ?secret= query param (for cron-job.org)
   const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const querySecret = req.nextUrl.searchParams.get('secret')
+  const isAuthorized =
+    authHeader === `Bearer ${process.env.CRON_SECRET}` ||
+    querySecret === process.env.CRON_SECRET
+
+  if (!isAuthorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
