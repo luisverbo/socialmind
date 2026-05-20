@@ -55,75 +55,140 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // ── Part 2: Create + generate tomorrow's posts for 'daily' schedules ─────────
-  const tomorrow = new Date(now)
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  const tomorrowDate = tomorrow.toISOString().split('T')[0]
-
+  // ── Part 2: Weekly batch for 'daily' schedules ───────────────────────────────
+  // When a daily schedule has < posts_per_day * 2 days of future posts left,
+  // generate the next 7-day batch and notify the client.
   const { data: dailySchedules } = await supabase
     .from('post_schedules')
-    .select('id, company_id, scheduled_time, theme_id, publish_mode')
+    .select('id, company_id, scheduled_times, posts_per_day, duration_days, last_batch_at, publish_mode')
     .eq('type', 'daily')
     .eq('status', 'active')
 
   for (const sched of dailySchedules ?? []) {
     try {
-      // Build the scheduled_for timestamp for tomorrow
-      const scheduledFor = new Date(`${tomorrowDate}T${sched.scheduled_time}`)
+      const postsPerDay: number   = sched.posts_per_day ?? 1
+      const schedTimes: string[]  = Array.isArray(sched.scheduled_times) && sched.scheduled_times.length > 0
+        ? sched.scheduled_times as string[]
+        : ['09:00:00']
 
-      // Check if a post already exists for this schedule tomorrow
-      const { data: existing } = await supabase
+      // Count how many future pending posts remain for this schedule
+      const { count: futureCount } = await supabase
         .from('posts')
-        .select('id')
+        .select('id', { count: 'exact', head: true })
         .eq('schedule_id', sched.id)
-        .gte('scheduled_for', `${tomorrowDate}T00:00:00`)
-        .lte('scheduled_for', `${tomorrowDate}T23:59:59`)
-        .limit(1)
+        .in('status', ['draft', 'waiting', 'approved'])
+        .gte('scheduled_for', new Date().toISOString())
 
-      if (existing && existing.length > 0) continue // already created
+      // Threshold: generate when < 2 days of posts remain
+      const threshold = postsPerDay * 2
+      if ((futureCount ?? 0) >= threshold) continue
 
-      // Check company credits
+      // Check company credits (need at least 1 full day's worth)
       const { data: company } = await supabase
         .from('companies')
-        .select('credits_balance')
+        .select('credits_balance, credits_limit')
         .eq('id', sched.company_id)
         .single()
 
-      if (!company || company.credits_balance < 5) {
-        console.log(`[cron/generate] Empresa ${sched.company_id} sem créditos suficientes para daily schedule`)
+      const creditsNeeded = postsPerDay * 5 // min 5 slides
+      if (!company || company.credits_balance < creditsNeeded) {
+        console.log(`[cron/generate] Empresa ${sched.company_id} sem créditos para batch diário`)
         continue
       }
 
-      // Create the draft post
-      const { data: newPost, error: insertErr } = await supabase
+      // Determine start date for new batch
+      const now       = new Date()
+      const batchDays = 7
+
+      // Check if schedule has a duration limit
+      let daysLeft = batchDays
+      if (sched.duration_days) {
+        const startedAt = sched.last_batch_at ? new Date(sched.last_batch_at) : now
+        const endDate   = new Date(startedAt.getTime() + sched.duration_days * 86400_000)
+        const remaining = Math.ceil((endDate.getTime() - now.getTime()) / 86400_000)
+        if (remaining <= 0) {
+          // Duration expired — pause the schedule
+          await supabase.from('post_schedules').update({ status: 'paused' }).eq('id', sched.id)
+          continue
+        }
+        daysLeft = Math.min(batchDays, remaining)
+      }
+
+      // Find the last scheduled_for for this schedule to continue from there
+      const { data: lastPost } = await supabase
         .from('posts')
-        .insert({
-          company_id:    sched.company_id,
-          schedule_id:   sched.id,
-          status:        'draft',
-          scheduled_for: scheduledFor.toISOString(),
-          content:       [],
-          slides_html:   [],
-          slides_images: [],
-        })
-        .select('id')
+        .select('scheduled_for')
+        .eq('schedule_id', sched.id)
+        .in('status', ['draft', 'waiting', 'approved', 'published'])
+        .order('scheduled_for', { ascending: false })
+        .limit(1)
         .single()
 
-      if (insertErr || !newPost) {
-        console.error(`[cron/generate] Erro ao criar draft para daily ${sched.id}: ${insertErr?.message}`)
-        continue
+      const batchStart = lastPost?.scheduled_for
+        ? new Date(new Date(lastPost.scheduled_for).getTime() + 86400_000) // day after last post
+        : now
+
+      // Create draft posts for the new batch
+      const newPosts: Record<string, unknown>[] = []
+      for (let d = 0; d < daysLeft; d++) {
+        for (const timeStr of schedTimes) {
+          const [h, m] = timeStr.replace(':00', '').split(':').map(Number)
+          const dt = new Date(batchStart)
+          dt.setDate(dt.getDate() + d)
+          dt.setHours(h, m, 0, 0)
+          if (dt <= now) continue
+          newPosts.push({
+            company_id:    sched.company_id,
+            schedule_id:   sched.id,
+            status:        'draft',
+            scheduled_for: dt.toISOString(),
+            content:       [],
+            slides_html:   [],
+            slides_images: [],
+          })
+        }
       }
 
-      // Generate the post
-      await withSemaphore(() =>
-        generateForPost(supabase, newPost.id, sched.company_id, sched.id, 'cron/generate-daily')
-      )
-      results.push({ post_id: newPost.id, status: 'ok' })
-      console.log(`[cron/generate] ✓ Daily post ${newPost.id} gerado para ${tomorrowDate}`)
+      if (newPosts.length === 0) continue
+
+      const { data: insertedPosts } = await supabase
+        .from('posts')
+        .insert(newPosts)
+        .select('id, scheduled_for')
+        .order('scheduled_for', { ascending: true })
+
+      // Mark batch generated time
+      await supabase.from('post_schedules')
+        .update({ last_batch_at: new Date().toISOString() })
+        .eq('id', sched.id)
+
+      // Generate the first post of the new batch immediately
+      const firstPost = insertedPosts?.[0]
+      if (firstPost) {
+        try {
+          await withSemaphore(() =>
+            generateForPost(supabase, firstPost.id, sched.company_id, sched.id, 'cron/daily-batch')
+          )
+          results.push({ post_id: firstPost.id, status: 'ok' })
+          console.log(`[cron/generate] ✓ Novo batch diário iniciado: ${insertedPosts?.length} posts para schedule ${sched.id}`)
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err)
+          results.push({ post_id: firstPost.id, status: 'error', detail: msg })
+        }
+      }
+
+      // Notify client that new batch is ready for review
+      const modeLabel = sched.publish_mode === 'review' ? 'para aprovação' : 'para publicação'
+      await supabase.from('notifications').insert({
+        company_id: sched.company_id,
+        type:       'post_ready',
+        message:    `Nova semana de conteúdo diário gerada (${insertedPosts?.length ?? 0} posts ${modeLabel}). Aprove antes que o conteúdo acabe!`,
+        read:       false,
+      })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
-      results.push({ post_id: `daily:${sched.id}`, status: 'error', detail: msg })
-      console.error(`[cron/generate] ✗ Daily schedule ${sched.id}: ${msg}`)
+      results.push({ post_id: `daily-batch:${sched.id}`, status: 'error', detail: msg })
+      console.error(`[cron/generate] ✗ Daily batch ${sched.id}: ${msg}`)
     }
   }
 

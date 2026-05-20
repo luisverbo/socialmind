@@ -27,6 +27,11 @@ export interface PostSchedule {
   day_of_week: string | null
   scheduled_date: string | null
   scheduled_time: string
+  scheduled_times: string[]
+  posts_per_day: number
+  duration_days: number | null
+  batch_size: number
+  last_batch_at: string | null
   publish_mode: 'automatic' | 'review'
   status: 'active' | 'paused'
   repeat: boolean
