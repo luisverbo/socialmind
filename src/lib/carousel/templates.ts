@@ -82,41 +82,52 @@ function coverTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: strin
 }
 
 function contentTemplate(slide: SlideContent, colors: BrandColors, slideNum: number, total: number, logoUrl?: string): string {
-  const bullets = slide.bullets ?? []
-  // Calculate dynamic font sizes based on content length to prevent overflow
-  const titleLen = slide.title?.length ?? 0
-  const titleFontSize = titleLen > 60 ? 48 : titleLen > 40 ? 52 : 58
+  const bullets   = slide.bullets ?? []
+  const titleLen  = slide.title?.length ?? 0
+  const bodyLen   = slide.body?.length ?? 0
   const bulletCount = bullets.length
-  const bodyLen = (slide.body?.length ?? 0)
-  const bulletsFontSize = bulletCount >= 4 || bodyLen > 80 ? 26 : bulletCount === 3 ? 28 : 30
-  const bulletsGap = bulletCount >= 4 ? 14 : 18
-  const h2MarginBottom = bulletCount >= 4 || bodyLen > 80 ? 24 : 30
-  const bodyFontSize = bulletCount >= 3 ? 26 : 28
-  const bodyMarginBottom = bulletCount >= 3 ? 20 : 24
+
+  // Avg chars per bullet (long bullets need smaller font)
+  const avgBulletLen = bullets.length > 0
+    ? bullets.reduce((s, b) => s + b.length, 0) / bullets.length
+    : 0
+
+  // Title font: large by default, scale down only for very long titles
+  const titleFontSize = titleLen > 55 ? 54 : titleLen > 38 ? 60 : 66
+
+  // Bullets font: reduce only when bullets are long or there are 4+
+  const bulletsFontSize = bulletCount >= 4
+    ? (avgBulletLen > 50 ? 26 : 28)
+    : avgBulletLen > 60 ? 28 : avgBulletLen > 40 ? 30 : 33
+
+  const bulletsGap      = bulletCount >= 4 ? 16 : bulletCount === 3 && avgBulletLen > 50 ? 20 : 24
+  const h2MarginBottom  = bodyLen > 0 ? 24 : bulletCount >= 4 ? 28 : 32
+  const bodyFontSize    = bodyLen > 100 ? 28 : 30
+  const bodyMarginBottom = 22
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
   <style>
     ${baseStyles(colors)}
     body { background: #FFFFFF; }
     .top-bar { height: 8px; background: linear-gradient(90deg, ${colors.primary}, ${colors.secondary}); }
-    .slide { padding: 64px 72px; justify-content: space-between; }
-    .counter { font-size: 24px; color: #9CA3AF; font-weight: 500; margin-bottom: 20px; }
+    .slide { padding: 72px 80px 64px; justify-content: space-between; }
+    .counter { font-size: 26px; color: #9CA3AF; font-weight: 500; margin-bottom: 22px; }
     .counter span { color: ${colors.primary}; font-weight: 700; }
     h2 { font-size: ${titleFontSize}px; font-weight: 800; color: #1A1A2E; line-height: 1.15; letter-spacing: -1px; margin-bottom: ${h2MarginBottom}px; }
     .body-text { font-size: ${bodyFontSize}px; color: #374151; line-height: 1.55; margin-bottom: ${bodyMarginBottom}px; }
     .content-area { flex: 1; min-height: 0; overflow: hidden; }
     .bullets { list-style: none; display: flex; flex-direction: column; gap: ${bulletsGap}px; }
     .bullet {
-      display: flex; align-items: flex-start; gap: 20px;
+      display: flex; align-items: flex-start; gap: 22px;
       font-size: ${bulletsFontSize}px; color: #374151; line-height: 1.45;
     }
     .bullet-dot {
-      flex-shrink: 0; width: 12px; height: 12px; border-radius: 50%;
+      flex-shrink: 0; width: 13px; height: 13px; border-radius: 50%;
       background: linear-gradient(135deg, ${colors.primary}, ${colors.secondary});
-      margin-top: 10px;
+      margin-top: 11px;
     }
     .footer { display: flex; align-items: center; justify-content: space-between; padding-top: 16px; flex-shrink: 0; }
-    .footer-text { font-size: 22px; color: #9CA3AF; }
+    .footer-text { font-size: 23px; color: #9CA3AF; }
     .progress { display: flex; gap: 8px; }
     .progress-dot { width: 10px; height: 10px; border-radius: 50%; background: #E5E7EB; }
     .progress-dot.active { background: ${colors.primary}; }
