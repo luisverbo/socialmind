@@ -1,10 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, CalendarDays, Images, Camera,
-  Settings, BarChart3, Zap, Instagram,
+  Settings, BarChart3, Zap, Instagram, AlertTriangle, LogOut,
 } from 'lucide-react'
 import { useCompany } from '@/hooks/useCompany'
 import { useState, useEffect } from 'react'
@@ -35,8 +35,10 @@ function isActive(pathname: string, href: string, exact: boolean) {
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const { company } = useCompany()
   const [hasInstagram, setHasInstagram] = useState(true)
+  const [isImpersonating, setIsImpersonating] = useState(false)
   const companyId = typeof window !== 'undefined' ? localStorage.getItem('socialmind_company_id') : null
 
   useEffect(() => {
@@ -47,12 +49,41 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       .catch(() => {})
   }, [companyId])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    setIsImpersonating(localStorage.getItem('socialmind_impersonating') === 'true')
+  }, [])
+
+  const handleStopImpersonating = () => {
+    localStorage.removeItem('socialmind_impersonating')
+    localStorage.removeItem('socialmind_company_id')
+    router.push('/admin/clients')
+  }
+
   const creditsUsed = company ? (company.credits_limit ?? 100) - (company.credits_balance ?? 0) : 0
   const pct      = company ? Math.min(100, (creditsUsed / (company.credits_limit ?? 100)) * 100) : 0
   const barColor = pct >= 90 ? '#EF4444' : undefined
 
   return (
-    <div className="min-h-screen bg-[#F8F7FF] flex">
+    <div className="min-h-screen bg-[#F8F7FF] flex flex-col">
+
+      {/* ── Impersonation banner ────────────────────── */}
+      {isImpersonating && (
+        <div className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-4 py-2.5 text-sm font-medium text-white"
+          style={{ background: 'linear-gradient(90deg, #F59E0B, #D97706)' }}>
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={15} />
+            <span>Você está visualizando como <strong>{company?.name ?? 'cliente'}</strong></span>
+          </div>
+          <button onClick={handleStopImpersonating}
+            className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-xs font-semibold transition-colors">
+            <LogOut size={12} />
+            Voltar ao Admin
+          </button>
+        </div>
+      )}
+
+    <div className={`flex-1 flex ${isImpersonating ? 'mt-10' : ''}`}>
 
       {/* ── Desktop sidebar ───────────────────────────── */}
       <aside className="hidden lg:flex flex-col w-60 bg-white border-r border-gray-100 px-4 py-6 fixed h-full z-10">
@@ -181,6 +212,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <main className="flex-1 lg:ml-60 pt-14 lg:pt-0 pb-20 lg:pb-0 min-h-screen">
         {children}
       </main>
+    </div>
     </div>
   )
 }
