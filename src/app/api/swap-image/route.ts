@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { renderSlide } from '@/lib/carousel/renderer'
-import type { BrandColors, CompanyContext, SlideContent, Template } from '@/lib/carousel/types'
+import type { BrandColors, CompanyContext, SlideContent, Template, RenderProfile } from '@/lib/carousel/types'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 60
@@ -46,11 +46,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'slide_index fora do range' }, { status: 400 })
     }
 
-    const { data: ctx } = await supabase
-      .from('company_context')
-      .select('*')
-      .eq('company_id', companyId)
-      .single()
+    const [{ data: ctx }, { data: igToken }, { data: company }] = await Promise.all([
+      supabase.from('company_context').select('*').eq('company_id', companyId).single(),
+      supabase.from('instagram_tokens').select('instagram_username, profile_picture_url').eq('company_id', companyId).maybeSingle(),
+      supabase.from('companies').select('name').eq('id', companyId).single(),
+    ])
 
     const brandColors: BrandColors = (ctx as CompanyContext | null)?.brand_colors ?? {
       primary: '#6C3FE8',
@@ -60,6 +60,12 @@ export async function POST(req: NextRequest) {
 
     const logoUrl: string | undefined = (ctx as CompanyContext | null)?.logo_url ?? undefined
 
+    const profile: RenderProfile = {
+      companyName:     company?.name ?? (ctx as CompanyContext | null)?.business_name ?? 'SocialMind',
+      instagramHandle: (igToken as { instagram_username?: string } | null)?.instagram_username ?? undefined,
+      profilePicUrl:   (igToken as { profile_picture_url?: string } | null)?.profile_picture_url ?? undefined,
+    }
+
     // Update the slide with the new imageUrl
     const updatedSlide: SlideContent = { ...slides[slide_index], imageUrl: image_url }
     const updatedSlides = slides.map((s, i) => i === slide_index ? updatedSlide : s)
@@ -67,7 +73,7 @@ export async function POST(req: NextRequest) {
     const postTemplate: Template = (post.template as Template | null) ?? 'classic'
 
     // Re-render the slide
-    const buffer = await renderSlide(updatedSlide, brandColors, slide_index + 1, slides.length, logoUrl, postTemplate)
+    const buffer = await renderSlide(updatedSlide, brandColors, slide_index + 1, slides.length, logoUrl, postTemplate, profile)
 
     // Upload new PNG (overwrite existing)
     const path = `slides/${companyId}/${post_id}/slide-${slide_index + 1}.png`

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { searchUnsplashPhoto } from '@/lib/unsplash'
-import type { UnsplashCredit, Template } from '@/lib/carousel/types'
+import type { UnsplashCredit, Template, RenderProfile } from '@/lib/carousel/types'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 300
@@ -51,10 +51,11 @@ export async function POST(req: NextRequest) {
 
   try {
     // ── Fetch context ──────────────────────────────────────────────────────────
-    const [{ data: ctx }, { data: media }, { data: company }] = await Promise.all([
+    const [{ data: ctx }, { data: media }, { data: company }, { data: igToken }] = await Promise.all([
       supabase.from('company_context').select('*').eq('company_id', job.company_id).single(),
       supabase.from('media_library').select('id, url, category, description').eq('company_id', job.company_id).limit(20),
-      supabase.from('companies').select('credits_balance').eq('id', job.company_id).single(),
+      supabase.from('companies').select('credits_balance, name').eq('id', job.company_id).single(),
+      supabase.from('instagram_tokens').select('instagram_username, profile_picture_url').eq('company_id', job.company_id).maybeSingle(),
     ])
 
     if (!ctx) throw new Error('Contexto da empresa não encontrado')
@@ -132,7 +133,15 @@ export async function POST(req: NextRequest) {
     const { renderAllSlides } = await import('@/lib/carousel/renderer')
     const brandColors = ctx.brand_colors ?? { primary: '#6C3FE8', secondary: '#E84393', accent: '#A855F7' }
     const logoUrl: string | undefined = ctx.logo_url ?? undefined
-    const buffers = await renderAllSlides(carousel.slides, brandColors, logoUrl, p.template ?? 'classic')
+
+    // Build profile for editorial template header
+    const profile: RenderProfile = {
+      companyName:    company?.name ?? ctx.business_name ?? 'SocialMind',
+      instagramHandle: igToken?.instagram_username ?? undefined,
+      profilePicUrl:   igToken?.profile_picture_url ?? undefined,
+    }
+
+    const buffers = await renderAllSlides(carousel.slides, brandColors, logoUrl, p.template ?? 'classic', profile)
 
     // ── Upload PNGs ───────────────────────────────────────────────────────────
     const postId = job.post_id!

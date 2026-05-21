@@ -62,6 +62,13 @@ export interface MediaItem {
   description: string | null
 }
 
+// Profile info used in editorial template header
+export interface RenderProfile {
+  companyName: string
+  instagramHandle?: string      // sem @
+  profilePicUrl?: string        // URL externa ou data URI
+}
+
 export interface UnsplashCredit {
   photographer: string
   photographerUrl: string

@@ -1,5 +1,5 @@
 import { buildSlideHtml } from './templates'
-import type { SlideContent, BrandColors, Template } from './types'
+import type { SlideContent, BrandColors, Template, RenderProfile } from './types'
 
 const RENDERER_URL = process.env.RENDERER_URL    // ex: http://2.24.210.233:3001
 const RENDERER_KEY = process.env.RENDERER_API_KEY
@@ -113,9 +113,10 @@ export async function renderSlide(
   slideIndex: number,
   total: number,
   logoDataUri?: string,       // já deve ser data URI, não URL externa
-  template: Template = 'classic'
+  template: Template = 'classic',
+  profile?: RenderProfile
 ): Promise<Buffer> {
-  const html = buildSlideHtml(slide, colors, slideIndex, total, logoDataUri, template)
+  const html = buildSlideHtml(slide, colors, slideIndex, total, logoDataUri, template, profile)
 
   if (RENDERER_URL && RENDERER_KEY) {
     try {
@@ -149,7 +150,8 @@ export async function renderAllSlides(
   slides: SlideContent[],
   colors: BrandColors,
   logoUrl?: string,
-  template: Template = 'classic'
+  template: Template = 'classic',
+  profile?: RenderProfile
 ): Promise<Buffer[]> {
   // Converte URL externa → base64 UMA vez antes de renderizar todos os slides
   const logoDataUri = await logoToDataUri(logoUrl)
@@ -157,10 +159,17 @@ export async function renderAllSlides(
     console.log('[renderer] Logo convertido para base64 com sucesso')
   }
 
+  // Converte profile picture (Instagram) para base64 também
+  let resolvedProfile: RenderProfile | undefined = profile
+  if (profile?.profilePicUrl && !profile.profilePicUrl.startsWith('data:')) {
+    const picDataUri = await logoToDataUri(profile.profilePicUrl)
+    resolvedProfile = { ...profile, profilePicUrl: picDataUri ?? undefined }
+  }
+
   // Converte imageUrl de slides de foto para base64 (evita CORS no Puppeteer)
   const resolvedSlides = await resolveSlideImages(slides)
 
   return Promise.all(
-    resolvedSlides.map((slide, i) => renderSlide(slide, colors, i + 1, resolvedSlides.length, logoDataUri, template))
+    resolvedSlides.map((slide, i) => renderSlide(slide, colors, i + 1, resolvedSlides.length, logoDataUri, template, resolvedProfile))
   )
 }

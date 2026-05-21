@@ -1,4 +1,4 @@
-import type { SlideContent, BrandColors, Template } from './types'
+import type { SlideContent, BrandColors, Template, RenderProfile } from './types'
 
 function escapeHtml(s: string): string {
   return s
@@ -284,23 +284,34 @@ function imageTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: strin
 
 // ─── Editorial template (Twitter/X card style) ────────────────────────────────
 
-function editorialHeader(colors: BrandColors, logoUrl: string | undefined, slideNum: number, total: number): string {
-  const avatarContent = logoUrl
-    ? `<img src="${escapeHtml(logoUrl)}" style="width:100%;height:100%;object-fit:contain;border-radius:50%;" />`
+function editorialHeader(
+  colors: BrandColors,
+  logoUrl: string | undefined,
+  slideNum: number,
+  total: number,
+  profile?: RenderProfile
+): string {
+  // Avatar: prefer Instagram profile pic, then logo, then gradient circle
+  const profilePic = profile?.profilePicUrl ?? logoUrl
+  const avatarContent = profilePic
+    ? `<img src="${escapeHtml(profilePic)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
     : `<div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,${colors.primary},${colors.secondary});"></div>`
+
+  const displayName = profile?.companyName ?? 'SocialMind'
+  const handle      = profile?.instagramHandle ? `@${profile.instagramHandle}` : '@socialmind'
 
   return `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:44px 64px 28px;flex-shrink:0;">
       <div style="display:flex;align-items:center;gap:18px;">
-        <div style="width:64px;height:64px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2.5px solid ${colors.primary}22;">
+        <div style="width:72px;height:72px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2.5px solid ${colors.primary}33;">
           ${avatarContent}
         </div>
         <div>
           <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-size:26px;font-weight:800;color:#0F172A;font-family:'Inter','Helvetica Neue',Arial,sans-serif;">SocialMind</span>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="${colors.primary}"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+            <span style="font-size:28px;font-weight:800;color:#0F172A;font-family:'Inter','Helvetica Neue',Arial,sans-serif;">${escapeHtml(displayName)}</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="${colors.primary}"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
           </div>
-          <span style="font-size:21px;color:#64748B;font-family:'Inter','Helvetica Neue',Arial,sans-serif;">@socialmind</span>
+          <span style="font-size:23px;color:#64748B;font-family:'Inter','Helvetica Neue',Arial,sans-serif;">${escapeHtml(handle)}</span>
         </div>
       </div>
       <span style="font-size:22px;color:#94A3B8;font-family:'Inter','Helvetica Neue',Arial,sans-serif;">${slideNum}/${total}</span>
@@ -324,36 +335,41 @@ function editorialFooter(colors: BrandColors): string {
     </div>`
 }
 
-function editorialCoverTemplate(slide: SlideContent, colors: BrandColors, slideNum: number, total: number, logoUrl?: string): string {
+function editorialCoverTemplate(slide: SlideContent, colors: BrandColors, slideNum: number, total: number, logoUrl?: string, profile?: RenderProfile): string {
+  // Image height: taller = more square. With header ~160px + footer ~100px, content is ~820px.
+  // A square image at full width (952px) would be 952px tall — too big. Use ~480px for a nice ratio.
+  const imgHeight = slide.imageUrl ? 460 : 260
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
   <style>
     * { margin:0;padding:0;box-sizing:border-box; }
     html,body { width:1080px;height:1080px;overflow:hidden;font-family:'Inter','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased; }
     body { background:#FFFFFF; }
     .slide { width:1080px;height:1080px;display:flex;flex-direction:column;position:relative;overflow:hidden; }
-    .content { flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:0 64px 32px; }
+    .content { flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:0 64px 24px; }
   </style></head><body>
   <div class="slide">
-    ${editorialHeader(colors, logoUrl, slideNum, total)}
+    ${editorialHeader(colors, logoUrl, slideNum, total, profile)}
     <div class="content">
-      ${slide.subtitle ? `<div style="display:inline-flex;align-items:center;gap:10px;background:${colors.primary}12;border:1.5px solid ${colors.primary}30;padding:10px 24px;border-radius:50px;margin-bottom:36px;align-self:flex-start;">
+      ${slide.subtitle ? `<div style="display:inline-flex;align-items:center;gap:10px;background:${colors.primary}12;border:1.5px solid ${colors.primary}30;padding:10px 24px;border-radius:50px;margin-bottom:32px;align-self:flex-start;">
         <div style="width:8px;height:8px;border-radius:50%;background:${colors.primary};"></div>
         <span style="font-size:24px;font-weight:600;color:${colors.primary};text-transform:uppercase;letter-spacing:1.5px;">${escapeHtml(slide.subtitle)}</span>
       </div>` : ''}
-      <h1 style="font-size:88px;font-weight:900;color:#0F172A;line-height:1.05;letter-spacing:-2px;margin-bottom:32px;">${escapeHtml(slide.title)}</h1>
-      ${slide.body ? `<p style="font-size:36px;color:#475569;line-height:1.55;max-width:880px;">${escapeHtml(slide.body)}</p>` : ''}
+      <h1 style="font-size:${slide.imageUrl ? '74px' : '88px'};font-weight:900;color:#0F172A;line-height:1.05;letter-spacing:-2px;margin-bottom:${slide.body ? '24px' : '0'};">${escapeHtml(slide.title)}</h1>
+      ${slide.body ? `<p style="font-size:32px;color:#475569;line-height:1.5;max-width:880px;">${escapeHtml(slide.body)}</p>` : ''}
     </div>
-    ${slide.imageUrl ? `<div style="flex-shrink:0;height:280px;margin:0 64px 0;border-radius:20px;overflow:hidden;position:relative;">
-      <img src="${escapeHtml(slide.imageUrl)}" style="width:100%;height:100%;object-fit:cover;" />
-    </div>` : `<div style="flex-shrink:0;height:220px;margin:0 64px;border-radius:20px;background:linear-gradient(135deg,${colors.primary}15,${colors.secondary}15);display:flex;align-items:center;justify-content:center;">
-      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,${colors.primary},${colors.secondary});opacity:0.4;"></div>
-    </div>`}
+    ${slide.imageUrl
+      ? `<div style="flex-shrink:0;height:${imgHeight}px;margin:0 64px;border-radius:24px;overflow:hidden;">
+          <img src="${escapeHtml(slide.imageUrl)}" style="width:100%;height:100%;object-fit:cover;" />
+        </div>`
+      : `<div style="flex-shrink:0;height:${imgHeight}px;margin:0 64px;border-radius:24px;background:linear-gradient(135deg,${colors.primary}15,${colors.secondary}15);display:flex;align-items:center;justify-content:center;">
+          <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,${colors.primary},${colors.secondary});opacity:0.35;"></div>
+        </div>`}
     ${editorialFooter(colors)}
   </div>
   </body></html>`
 }
 
-function editorialContentTemplate(slide: SlideContent, colors: BrandColors, slideNum: number, total: number, logoUrl?: string): string {
+function editorialContentTemplate(slide: SlideContent, colors: BrandColors, slideNum: number, total: number, logoUrl?: string, profile?: RenderProfile): string {
   const bullets = slide.bullets ?? []
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
   <style>
@@ -364,7 +380,7 @@ function editorialContentTemplate(slide: SlideContent, colors: BrandColors, slid
     .content { flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;padding:12px 64px 0; }
   </style></head><body>
   <div class="slide">
-    ${editorialHeader(colors, logoUrl, slideNum, total)}
+    ${editorialHeader(colors, logoUrl, slideNum, total, profile)}
     <div class="content">
       <h2 style="font-size:62px;font-weight:800;color:#0F172A;line-height:1.12;letter-spacing:-1px;margin-bottom:28px;">${escapeHtml(slide.title)}</h2>
       ${slide.body ? `<p style="font-size:30px;color:#475569;line-height:1.6;margin-bottom:30px;">${escapeHtml(slide.body)}</p>` : ''}
@@ -380,7 +396,7 @@ function editorialContentTemplate(slide: SlideContent, colors: BrandColors, slid
   </body></html>`
 }
 
-function editorialCtaTemplate(slide: SlideContent, colors: BrandColors, slideNum: number, total: number, logoUrl?: string): string {
+function editorialCtaTemplate(slide: SlideContent, colors: BrandColors, slideNum: number, total: number, logoUrl?: string, profile?: RenderProfile): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
   <style>
     * { margin:0;padding:0;box-sizing:border-box; }
@@ -390,7 +406,7 @@ function editorialCtaTemplate(slide: SlideContent, colors: BrandColors, slideNum
     .content { flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:0 64px; }
   </style></head><body>
   <div class="slide">
-    ${editorialHeader(colors, logoUrl, slideNum, total)}
+    ${editorialHeader(colors, logoUrl, slideNum, total, profile)}
     <div class="content">
       <h2 style="font-size:74px;font-weight:900;color:#0F172A;line-height:1.08;letter-spacing:-1.5px;margin-bottom:32px;">${escapeHtml(slide.title)}</h2>
       ${slide.body ? `<p style="font-size:32px;color:#475569;line-height:1.6;margin-bottom:48px;max-width:880px;">${escapeHtml(slide.body)}</p>` : ''}
@@ -404,11 +420,11 @@ function editorialCtaTemplate(slide: SlideContent, colors: BrandColors, slideNum
   </body></html>`
 }
 
-function editorialSlideHtml(slide: SlideContent, colors: BrandColors, slideIndex: number, total: number, logoUrl?: string): string {
+function editorialSlideHtml(slide: SlideContent, colors: BrandColors, slideIndex: number, total: number, logoUrl?: string, profile?: RenderProfile): string {
   switch (slide.type) {
-    case 'cover': return editorialCoverTemplate(slide, colors, slideIndex, total, logoUrl)
-    case 'cta':   return editorialCtaTemplate(slide, colors, slideIndex, total, logoUrl)
-    default:      return editorialContentTemplate(slide, colors, slideIndex, total, logoUrl)
+    case 'cover': return editorialCoverTemplate(slide, colors, slideIndex, total, logoUrl, profile)
+    case 'cta':   return editorialCtaTemplate(slide, colors, slideIndex, total, logoUrl, profile)
+    default:      return editorialContentTemplate(slide, colors, slideIndex, total, logoUrl, profile)
   }
 }
 
@@ -541,10 +557,11 @@ export function buildSlideHtml(
   slideIndex: number,
   total: number,
   logoUrl?: string,
-  template: Template = 'classic'
+  template: Template = 'classic',
+  profile?: RenderProfile
 ): string {
   if (template === 'editorial') {
-    return editorialSlideHtml(slide, colors, slideIndex, total, logoUrl)
+    return editorialSlideHtml(slide, colors, slideIndex, total, logoUrl, profile)
   }
   if (template === 'dark') {
     return darkSlideHtml(slide, colors, slideIndex, total, logoUrl)
