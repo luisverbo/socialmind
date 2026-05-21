@@ -20,12 +20,13 @@ const TONE_OPTS = [
   { value: 'educational',  label: 'Educativo',    emoji: '📚' },
   { value: 'motivational', label: 'Motivacional', emoji: '🔥' },
   { value: 'promotional',  label: 'Promocional',  emoji: '🛍️' },
+  { value: 'journalistic', label: 'Jornalístico', emoji: '📰' },
 ] as const
 
 interface DayConfig {
   enabled:  boolean
   theme_id: string
-  tone:     'educational' | 'motivational' | 'promotional'
+  tone:     'educational' | 'motivational' | 'promotional' | 'journalistic'
 }
 
 type WeeklyConfig = Record<number, DayConfig>

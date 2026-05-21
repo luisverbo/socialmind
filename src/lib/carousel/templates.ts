@@ -39,10 +39,17 @@ function baseStyles(colors: BrandColors): string {
 
 function coverTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: string): string {
   const gradient = `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`
+  const hasImage = !!slide.imageUrl
+  const isUnsplash = hasImage && slide.imageUrl!.includes('unsplash')
+
+  const bodyBackground = hasImage
+    ? `background-image: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('${slide.imageUrl}'); background-size: cover; background-position: center;`
+    : `background: ${gradient};`
+
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
   <style>
     ${baseStyles(colors)}
-    body { background: ${gradient}; }
+    body { ${bodyBackground} }
     .slide { justify-content: center; align-items: center; padding: 80px; text-align: center; }
     .badge {
       display: inline-block; background: rgba(255,255,255,.2);
@@ -65,6 +72,7 @@ function coverTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: strin
       position: absolute; width: 500px; height: 500px; border-radius: 50%;
       background: rgba(255,255,255,.05); bottom: -150px; right: -100px;
     }
+    .photo-credit { position: absolute; bottom: 12px; left: 80px; font-size: 11px; color: rgba(255,255,255,0.4); }
   </style></head><body>
   <div class="slide">
     <div class="decorator"></div>
@@ -77,6 +85,7 @@ function coverTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: strin
       Deslize
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
+    ${isUnsplash ? `<p class="photo-credit">Photo: Unsplash</p>` : ''}
   </div>
   </body></html>`
 }
@@ -153,6 +162,50 @@ function contentTemplate(slide: SlideContent, colors: BrandColors, slideNum: num
 
 function ctaTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: string): string {
   const gradient = `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`
+  const hasImage = !!slide.imageUrl
+  const isUnsplash = hasImage && slide.imageUrl!.includes('unsplash')
+
+  if (hasImage) {
+    return `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <style>
+    ${baseStyles(colors)}
+    body {
+      background-image: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('${slide.imageUrl}');
+      background-size: cover; background-position: center;
+    }
+    .slide { justify-content: center; align-items: center; padding: 80px; text-align: center; }
+    .icon-wrap {
+      width: 120px; height: 120px; border-radius: 32px;
+      background: ${gradient}; display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 56px; box-shadow: 0 20px 60px rgba(108,63,232,.35);
+    }
+    h2 { font-size: 76px; font-weight: 800; color: #fff; line-height: 1.1; letter-spacing: -2px; margin-bottom: 36px; }
+    .body { font-size: 40px; color: rgba(255,255,255,0.85); line-height: 1.5; max-width: 820px; margin-bottom: 72px; }
+    .cta-btn {
+      display: inline-block; padding: 32px 80px; border-radius: 20px;
+      background: #fff; color: ${colors.primary};
+      font-size: 40px; font-weight: 700; letter-spacing: -.5px;
+      box-shadow: 0 16px 48px rgba(0,0,0,.30);
+    }
+    .sub { margin-top: 40px; font-size: 28px; color: rgba(255,255,255,0.7); }
+    .photo-credit { position: absolute; bottom: 12px; left: 80px; font-size: 11px; color: rgba(255,255,255,0.4); }
+  </style></head><body>
+  <div class="slide">
+    ${logoHtml(logoUrl, true)}
+    <div class="icon-wrap">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+      </svg>
+    </div>
+    <h2>${escapeHtml(slide.title)}</h2>
+    ${slide.body ? `<p class="body">${escapeHtml(slide.body)}</p>` : ''}
+    ${slide.cta ? `<div class="cta-btn">${escapeHtml(slide.cta)}</div>` : ''}
+    ${slide.subtitle ? `<p class="sub">${escapeHtml(slide.subtitle)}</p>` : ''}
+    ${isUnsplash ? `<p class="photo-credit">Photo: Unsplash</p>` : ''}
+  </div>
+  </body></html>`
+  }
+
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
   <style>
     ${baseStyles(colors)}

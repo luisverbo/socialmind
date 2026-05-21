@@ -5,9 +5,10 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import {
-  ChevronLeft, ChevronRight, Check, X, Edit3, RefreshCw, ArrowLeft, Loader2
+  ChevronLeft, ChevronRight, Check, X, Edit3, RefreshCw, ArrowLeft, Loader2, ImageIcon,
 } from 'lucide-react'
 import type { Post } from '@/types/scheduling'
+import ImageSwapModal from './ImageSwapModal'
 
 interface Props {
   post: Post
@@ -28,9 +29,14 @@ export default function PostPreview({ post: initialPost }: Props) {
   const [editingCaption, setEditingCaption] = useState(false)
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
   const [regeneratingSlide, setRegeneratingSlide] = useState<number | null>(null)
+  const [swappingSlide,     setSwappingSlide]     = useState<number | null>(null)
+  const [swapModalOpen,     setSwapModalOpen]     = useState(false)
+  const [swapSlideIndex,    setSwapSlideIndex]    = useState(0)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [scheduleDate, setScheduleDate] = useState('')
   const [scheduleTime, setScheduleTime] = useState('09:00')
+
+  const companyId = typeof window !== 'undefined' ? localStorage.getItem('socialmind_company_id') ?? '' : ''
 
   const images: string[] = Array.isArray(post.slides_images) ? post.slides_images : []
   const total = images.length
@@ -102,6 +108,27 @@ export default function PostPreview({ post: initialPost }: Props) {
       showMessage('error', 'Erro ao agendar post.')
     } finally {
       setLoadingAction(null)
+    }
+  }
+
+  async function handleSwapImage(slideIndex: number, imageUrl: string) {
+    setSwappingSlide(slideIndex)
+    try {
+      const res = await fetch('/api/swap-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ post_id: post.id, slide_index: slideIndex, image_url: imageUrl }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      const newImages = [...images]
+      newImages[slideIndex] = data.url
+      setPost(p => ({ ...p, slides_images: newImages }))
+      showMessage('success', `Imagem do slide ${slideIndex + 1} trocada!`)
+    } catch (err) {
+      showMessage('error', err instanceof Error ? err.message : 'Erro ao trocar imagem')
+    } finally {
+      setSwappingSlide(null)
     }
   }
 
@@ -213,19 +240,31 @@ export default function PostPreview({ post: initialPost }: Props) {
                 )}
               </div>
 
-              {/* Slide counter + regen */}
+              {/* Slide counter + actions */}
               <div className="px-4 py-3 flex items-center justify-between border-t border-gray-100">
                 <span className="text-sm text-gray-400 font-medium">
                   {current + 1} / {total}
                 </span>
-                <button
-                  onClick={() => handleRegenerateSlide(current)}
-                  disabled={regeneratingSlide !== null}
-                  className="flex items-center gap-1.5 text-xs font-medium text-[#6C3FE8] hover:text-[#5B34D1] transition-colors disabled:opacity-50"
-                >
-                  <RefreshCw size={13} className={regeneratingSlide === current ? 'animate-spin' : ''} />
-                  Regenerar este slide
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => { setSwapSlideIndex(current); setSwapModalOpen(true) }}
+                    disabled={swappingSlide !== null || regeneratingSlide !== null}
+                    className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-[#6C3FE8] transition-colors disabled:opacity-50"
+                  >
+                    {swappingSlide === current
+                      ? <Loader2 size={13} className="animate-spin" />
+                      : <ImageIcon size={13} />}
+                    Trocar imagem
+                  </button>
+                  <button
+                    onClick={() => handleRegenerateSlide(current)}
+                    disabled={regeneratingSlide !== null}
+                    className="flex items-center gap-1.5 text-xs font-medium text-[#6C3FE8] hover:text-[#5B34D1] transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw size={13} className={regeneratingSlide === current ? 'animate-spin' : ''} />
+                    Regenerar
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -428,6 +467,15 @@ export default function PostPreview({ post: initialPost }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Image Swap Modal */}
+      <ImageSwapModal
+        open={swapModalOpen}
+        slideIndex={swapSlideIndex}
+        companyId={companyId}
+        onClose={() => setSwapModalOpen(false)}
+        onSelect={(imageUrl) => handleSwapImage(swapSlideIndex, imageUrl)}
+      />
     </div>
   )
 }

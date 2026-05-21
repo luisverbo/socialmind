@@ -10,12 +10,12 @@ function adminClient() {
   )
 }
 
-export async function GET(_req: NextRequest, { params }: { params: { jobId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { jobId: string } }) {
   const supabase = adminClient()
 
   const { data: job, error } = await supabase
     .from('generation_jobs')
-    .select('id, post_id, status, error, created_at, updated_at')
+    .select('id, post_id, status, error, created_at')
     .eq('id', params.jobId)
     .single()
 
@@ -25,11 +25,27 @@ export async function GET(_req: NextRequest, { params }: { params: { jobId: stri
 
   const elapsed = Math.round((Date.now() - new Date(job.created_at).getTime()) / 1000)
 
+  // ── Self-heal: if job is still pending after 5s, trigger the worker ──────
+  // This handles cases where the fire-and-forget in generate-carousel didn't
+  // reach the worker (Vercel can suspend the process before fetch completes).
+  if (job.status === 'pending' && elapsed >= 5) {
+    const workerUrl = new URL('/api/jobs/worker', req.url).toString()
+    fetch(workerUrl, {
+      method:  'POST',
+      headers: {
+        'Content-Type':    'application/json',
+        'x-worker-secret': process.env.CRON_SECRET ?? '',
+      },
+      body: JSON.stringify({ job_id: job.id }),
+    }).catch(() => {})
+    console.log(`[jobs/${params.jobId}] Re-triggered worker for stuck pending job`)
+  }
+
   return NextResponse.json({
-    job_id:   job.id,
-    post_id:  job.post_id,
-    status:   job.status,   // pending | processing | completed | failed
-    error:    job.error,
-    elapsed:  elapsed,      // seconds since job was created
+    job_id:  job.id,
+    post_id: job.post_id,
+    status:  job.status,
+    error:   job.error,
+    elapsed,
   })
 }

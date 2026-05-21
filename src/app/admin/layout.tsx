@@ -33,32 +33,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#0F0F1A' }}>
+    <div className="min-h-screen flex bg-gray-50">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+          className="fixed inset-0 bg-black/30 z-20 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-30 w-64 flex-shrink-0 flex flex-col transition-transform duration-200
+        className={`fixed lg:static inset-y-0 left-0 z-30 w-64 flex-shrink-0 flex flex-col bg-white border-r border-gray-100 shadow-sm transition-transform duration-200
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
-        style={{ backgroundColor: '#0F0F1A', borderRight: '1px solid rgba(255,255,255,0.08)' }}
       >
         {/* Logo */}
-        <div className="p-6 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        <div className="p-6 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #6C3FE8, #E84393)' }}>
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, #6C3FE8, #E84393)' }}
+            >
               <Zap className="w-4 h-4 text-white" />
             </div>
             <div>
-              <span className="text-white font-bold text-sm block leading-tight">SocialMind</span>
+              <span className="text-gray-900 font-bold text-sm block leading-tight">SocialMind</span>
               <div className="flex items-center gap-1 mt-0.5">
-                <Shield className="w-2.5 h-2.5 text-amber-400" />
-                <span className="text-amber-400 text-[10px] font-medium">Admin</span>
+                <Shield className="w-2.5 h-2.5 text-amber-500" />
+                <span className="text-amber-500 text-[10px] font-semibold">Admin</span>
               </div>
             </div>
           </div>
@@ -76,10 +78,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
                   active
-                    ? 'text-white'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 border border-purple-100'
+                    : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
                 }`}
-                style={active ? { background: 'linear-gradient(135deg, rgba(108,63,232,0.2), rgba(232,67,147,0.15))', color: 'white' } : {}}
               >
                 <Icon className="w-4 h-4 flex-shrink-0" />
                 {item.label}
@@ -89,10 +90,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
 
         {/* Sign out */}
-        <div className="p-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        <div className="p-4 border-t border-gray-100">
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-all duration-150"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:text-red-500 hover:bg-red-50 transition-all duration-150"
           >
             <LogOut className="w-4 h-4" />
             Sair
@@ -103,11 +104,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile header */}
-        <header className="lg:hidden flex items-center justify-between px-4 py-3 border-b" style={{ backgroundColor: '#0F0F1A', borderColor: 'rgba(255,255,255,0.08)' }}>
-          <button onClick={() => setSidebarOpen(true)} className="text-gray-400 hover:text-white">
+        <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="text-gray-500 hover:text-gray-800 transition-colors"
+          >
             <Menu className="w-5 h-5" />
           </button>
-          <span className="text-white font-semibold text-sm">Admin Panel</span>
+          <span className="text-gray-900 font-semibold text-sm">Admin Panel</span>
           <div />
         </header>
 

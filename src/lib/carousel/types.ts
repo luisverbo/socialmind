@@ -13,6 +13,7 @@ export interface SlideContent {
   bullets?: string[]
   cta?: string
   imageUrl?: string
+  imageKeyword?: string
   footer?: string
 }
 
@@ -21,11 +22,13 @@ export interface CarouselContent {
   caption: string
 }
 
+export type Tone = 'educational' | 'motivational' | 'promotional' | 'journalistic'
+
 export interface GenerateCarouselInput {
   companyId: string
   scheduleId: string | null
   theme: string
-  tone: 'educational' | 'motivational' | 'promotional'
+  tone: 'educational' | 'motivational' | 'promotional' | 'journalistic'
   slidesCount: number
   publishMode: 'automatic' | 'review'
   scheduledFor?: string | null  // ISO string, optional
@@ -54,4 +57,12 @@ export interface MediaItem {
   url: string
   category: string
   description: string | null
+}
+
+export interface UnsplashCredit {
+  photographer: string
+  photographerUrl: string
+  photoPageUrl: string
+  photoId: string
+  slideIndex: number
 }

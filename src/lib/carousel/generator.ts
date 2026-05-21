@@ -5,6 +5,7 @@ const TONE_MAP = {
   educational:  'educativo e informativo',
   motivational: 'motivacional e inspirador',
   promotional:  'promocional e persuasivo',
+  journalistic: 'jornalístico investigativo',
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -21,7 +22,7 @@ export interface WeekPlanItem {
 export async function generateWeekPlan(
   ctx: CompanyContext,
   theme: string,
-  tone: 'educational' | 'motivational' | 'promotional',
+  tone: 'educational' | 'motivational' | 'promotional' | 'journalistic',
   count: number,
 ): Promise<WeekPlanItem[]> {
   const toneLabel = TONE_MAP[tone]
@@ -218,7 +219,7 @@ OBRIGATÓRIO: máx 9 palavras, sem ponto final, cria curiosidade SEM revelar a r
 // SYSTEM PROMPT
 // ─────────────────────────────────────────────────────────────────────────────
 
-function buildSystemPrompt(ctx: CompanyContext, mediaItems: MediaItem[]): string {
+function buildSystemPrompt(ctx: CompanyContext, mediaItems: MediaItem[], tone?: string): string {
   const mediaSection = mediaItems.length > 0
     ? `\n\nIMAGENS DISPONÍVEIS NA BIBLIOTECA:\n${mediaItems.slice(0, 10).map(m => `- [${m.category}] ${m.url}${m.description ? ' — ' + m.description : ''}`).join('\n')}`
     : ''
@@ -303,6 +304,40 @@ REGRA Nº 4 — LEGENDA
 ════════════════════════════════════════
 FORMATO DE SAÍDA
 ════════════════════════════════════════
+${tone === 'journalistic' ? `
+════════════════════════════════════════
+REGRAS JORNALÍSTICAS — Tom Investigativo
+(Inspirado em Breakthrough Advertising de Eugene Schwartz)
+════════════════════════════════════════
+
+TÍTULOS — estilo manchete de impacto:
+✓ Use dados e números específicos
+✓ Cause choque ou curiosidade imediata
+✓ NUNCA revele a solução na capa
+Exemplos aprovados:
+  "Estudo revela por que 9 em cada 10 negócios fecham no 1º ano"
+  "O método que dobrou vendas em 30 dias e ninguém estava falando"
+  "Especialistas alertam: quem não fizer isso agora vai ficar para trás"
+
+CORPO DO TEXTO — técnica open loop:
+✓ Cada frase cria curiosidade para a próxima
+✓ NUNCA feche a ideia completamente num slide — o leitor PRECISA ir ao próximo
+✓ Estrutura de cada slide:
+  - Linha 1: dado surpreendente ou afirmação forte
+  - Linha 2: aprofunda e gera dúvida
+  - Linha 3: gancho direto para o próximo slide
+
+VOCABULÁRIO OBRIGATÓRIO nesse tom:
+"revelado", "comprovado", "confirmado", "segundo especialistas",
+"dados mostram", "o que ninguém estava esperando", números e percentuais reais
+
+VOCABULÁRIO PROIBIDO nesse tom:
+"dicas", "truques", "segredos simples", qualquer clichê genérico de IA
+
+ÚLTIMO SLIDE — chamada urgente estilo fim de reportagem:
+Ex: "A questão não é SE isso vai acontecer com você. É QUANDO.
+     E o que você vai fazer a respeito define tudo."
+` : ''}
 Retorne SOMENTE JSON válido, sem markdown, sem explicações.`
 }
 
@@ -312,7 +347,7 @@ Retorne SOMENTE JSON válido, sem markdown, sem explicações.`
 
 function buildUserPrompt(
   theme: string,
-  tone: 'educational' | 'motivational' | 'promotional',
+  tone: 'educational' | 'motivational' | 'promotional' | 'journalistic',
   slidesCount: number,
   mediaItems: MediaItem[],
   recentTopics: string[] = [],
@@ -321,6 +356,11 @@ function buildUserPrompt(
   const imageUrls = mediaItems.filter(m => m.url).slice(0, 5).map(m => m.url)
   const hasImages = imageUrls.length > 0
   const seed      = `${new Date().toISOString().slice(0, 16)}-${Math.random().toString(36).slice(2, 7)}`
+
+  // Build a short media reference list for the image slide instruction
+  const mediaRef = mediaItems.slice(0, 10).map(m =>
+    `- URL: "${m.url}" | Categoria: ${m.category}${m.description ? ` | Descrição: ${m.description}` : ''}`
+  ).join('\n')
 
   // ── Anti-repetition block ──
   const recentSection = recentTopics.length > 0
@@ -416,15 +456,34 @@ SLIDE ${slidesCount} — CTA (type: "cta")
 - subtitle: pergunta que gera comentários
 
 IMPORTANTE — TIPOS DE SLIDE:
-Use APENAS type "cover", "content" e "cta".
-NÃO use type "image" — todos os slides devem ter conteúdo escrito.
+Use SEMPRE "cover" para slide 1 e "cta" para o último slide.
+Slides intermediários devem ser "content".
+
+${hasImages ? `SLIDE DE FOTO (opcional — use apenas se fizer sentido para o tema):
+Você PODE inserir exatamente 1 slide de foto como slide 2 (logo após a capa).
+Use type "image" com imageUrl apontando para a URL mais relevante da biblioteca abaixo.
+O slide de foto deve ter title (impacto emocional, máx 8 palavras) e body (contexto curto, máx 12 palavras).
+Se usar slide de foto, o total de slides de conteúdo escrito diminui em 1.
+
+IMAGENS DISPONÍVEIS NA BIBLIOTECA:
+${mediaRef}
+
+Escolha a imagem cujo categoria/descrição seja mais relevante para o tema "${theme}".
+Se nenhuma imagem for claramente relevante, não use slide de foto.` : `NÃO use type "image" — não há fotos disponíveis na biblioteca.`}
+
+IMAGEM POR SLIDE (opcional mas recomendado):
+Para o slide 1 (cover) e o último slide (cta), adicione um campo "imageKeyword" com 3-5 palavras em INGLÊS que descrevam a imagem ideal para esse slide.
+O sistema vai usar essa keyword para buscar uma foto relevante.
+Exemplos:
+- Cover sobre "Erros no Instagram": imageKeyword: "social media marketing mistakes"
+- CTA de um post educativo: imageKeyword: "professional learning business success"
 
 Retorne SOMENTE este JSON válido, sem markdown:
 {
   "slides": [
-    {"slide":1,"type":"cover","title":"...","subtitle":"...","body":"..."},
+    {"slide":1,"type":"cover","title":"...","subtitle":"...","body":"...","imageKeyword":"..."},
     {"slide":2,"type":"content","title":"...","bullets":["...","...","..."],"body":"..."},
-    {"slide":${slidesCount},"type":"cta","title":"...","body":"...","cta":"...","subtitle":"..."}
+    {"slide":${slidesCount},"type":"cta","title":"...","body":"...","cta":"...","subtitle":"...","imageKeyword":"..."}
   ],
   "caption": "..."
 }`
@@ -438,12 +497,12 @@ export async function generateCarouselContent(
   ctx: CompanyContext,
   mediaItems: MediaItem[],
   theme: string,
-  tone: 'educational' | 'motivational' | 'promotional',
+  tone: 'educational' | 'motivational' | 'promotional' | 'journalistic',
   slidesCount: number,
   recentTopics: string[] = [],
   batchAngle?: WeekPlanItem,
 ): Promise<CarouselContent> {
-  const systemPrompt = buildSystemPrompt(ctx, mediaItems)
+  const systemPrompt = buildSystemPrompt(ctx, mediaItems, tone)
   const userPrompt   = buildUserPrompt(theme, tone, slidesCount, mediaItems, recentTopics, batchAngle)
 
   const response = await anthropic.messages.create({
