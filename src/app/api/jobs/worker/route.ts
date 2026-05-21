@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       mediaByCategory[m.category].push(m.url)
     })
 
-    function pickMedia(categories: string[]): string | undefined {
+    const pickMedia = (categories: string[]): string | undefined => {
       for (const cat of categories) {
         const urls = mediaByCategory[cat]
         if (urls?.length) return urls[Math.floor(Math.random() * urls.length)]
