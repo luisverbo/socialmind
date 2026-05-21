@@ -14,7 +14,28 @@ const TONE_OPTS = [
   { value: 'journalistic', label: 'Jornalístico', emoji: '📰' },
 ] as const
 
-const SLIDES_OPTS = [5, 7, 10] as const
+const SLIDES_OPTS = [1, 5, 7, 10] as const
+
+const TEMPLATE_OPTS = [
+  {
+    value: 'classic' as const,
+    label: 'Clássico',
+    desc: 'Gradient + branco',
+    preview: '🎨',
+  },
+  {
+    value: 'editorial' as const,
+    label: 'Editorial',
+    desc: 'Estilo Twitter/X',
+    preview: '📰',
+  },
+  {
+    value: 'dark' as const,
+    label: 'Dark',
+    desc: 'Fundo escuro',
+    preview: '🌙',
+  },
+]
 
 const DAY_NAMES = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado']
 
@@ -50,7 +71,8 @@ export default function GeneratePostModal({ open, onClose, themes }: Props) {
   const [themeId,      setThemeId]      = useState('')
   const [customTheme,  setCustomTheme]  = useState('')
   const [tone,         setTone]         = useState<'educational' | 'motivational' | 'promotional' | 'journalistic'>('educational')
-  const [slides,       setSlides]       = useState<5 | 7 | 10>(7)
+  const [slides,       setSlides]       = useState<1 | 5 | 7 | 10>(7)
+  const [template,     setTemplate]     = useState<'classic' | 'editorial' | 'dark'>('classic')
   const [mode,         setMode]         = useState<'review' | 'automatic'>('review')
   const [useImages,    setUseImages]    = useState(false)
   const [scheduleDate, setScheduleDate] = useState('')
@@ -99,6 +121,7 @@ export default function GeneratePostModal({ open, onClose, themes }: Props) {
     setCustomTheme('')
     setTone('educational')
     setSlides(7)
+    setTemplate('classic')
     setMode('review')
     setUseImages(false)
     setScheduleDate('')
@@ -188,6 +211,7 @@ export default function GeneratePostModal({ open, onClose, themes }: Props) {
           publish_mode:  mode,
           use_images:    useImages,
           scheduled_for: scheduledFor,
+          template,
         }),
       })
       const data = await res.json()
@@ -377,7 +401,27 @@ export default function GeneratePostModal({ open, onClose, themes }: Props) {
                           slides === n
                             ? 'bg-[#F8F7FF] border-[#6C3FE8] text-[#6C3FE8]'
                             : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'
-                        }`}>{n}
+                        }`}>
+                        {n === 1 ? '1 imagem' : `${n} slides`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Template */}
+                <div>
+                  <label className="form-label">Template</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {TEMPLATE_OPTS.map(opt => (
+                      <button key={opt.value} type="button" onClick={() => setTemplate(opt.value)}
+                        className={`p-2.5 rounded-xl border text-center transition-all ${
+                          template === opt.value
+                            ? 'bg-[#F8F7FF] border-[#6C3FE8] text-[#6C3FE8]'
+                            : 'bg-white border-gray-200 hover:border-gray-300 text-gray-400'
+                        }`}>
+                        <div className="text-base mb-0.5">{opt.preview}</div>
+                        <p className="text-xs font-semibold">{opt.label}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{opt.desc}</p>
                       </button>
                     ))}
                   </div>

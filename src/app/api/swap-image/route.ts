@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { renderSlide } from '@/lib/carousel/renderer'
-import type { BrandColors, CompanyContext, SlideContent } from '@/lib/carousel/types'
+import type { BrandColors, CompanyContext, SlideContent, Template } from '@/lib/carousel/types'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 60
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
     const { data: post, error: postErr } = await supabase
       .from('posts')
-      .select('id, company_id, content, slides_images, unsplash_credits')
+      .select('id, company_id, content, slides_images, unsplash_credits, template')
       .eq('id', post_id)
       .single()
 
@@ -64,8 +64,10 @@ export async function POST(req: NextRequest) {
     const updatedSlide: SlideContent = { ...slides[slide_index], imageUrl: image_url }
     const updatedSlides = slides.map((s, i) => i === slide_index ? updatedSlide : s)
 
+    const postTemplate: Template = (post.template as Template | null) ?? 'classic'
+
     // Re-render the slide
-    const buffer = await renderSlide(updatedSlide, brandColors, slide_index + 1, slides.length, logoUrl)
+    const buffer = await renderSlide(updatedSlide, brandColors, slide_index + 1, slides.length, logoUrl, postTemplate)
 
     // Upload new PNG (overwrite existing)
     const path = `slides/${companyId}/${post_id}/slide-${slide_index + 1}.png`

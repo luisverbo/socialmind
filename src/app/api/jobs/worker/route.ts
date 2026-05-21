@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { searchUnsplashPhoto } from '@/lib/unsplash'
-import type { UnsplashCredit } from '@/lib/carousel/types'
+import type { UnsplashCredit, Template } from '@/lib/carousel/types'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 300
@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
     publishMode:  'automatic' | 'review'
     useImages:    boolean
     scheduledFor: string | null
+    template?:    Template
   }
 
   try {
@@ -131,7 +132,7 @@ export async function POST(req: NextRequest) {
     const { renderAllSlides } = await import('@/lib/carousel/renderer')
     const brandColors = ctx.brand_colors ?? { primary: '#6C3FE8', secondary: '#E84393', accent: '#A855F7' }
     const logoUrl: string | undefined = ctx.logo_url ?? undefined
-    const buffers = await renderAllSlides(carousel.slides, brandColors, logoUrl)
+    const buffers = await renderAllSlides(carousel.slides, brandColors, logoUrl, p.template ?? 'classic')
 
     // ── Upload PNGs ───────────────────────────────────────────────────────────
     const postId = job.post_id!
@@ -151,6 +152,7 @@ export async function POST(req: NextRequest) {
       slides_images:    imageUrls,
       caption:          carousel.caption,
       status,
+      template:         p.template ?? 'classic',
       ...(unsplashCredits.length > 0 ? { unsplash_credits: unsplashCredits } : {}),
     }).eq('id', postId)
 
