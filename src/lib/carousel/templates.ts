@@ -1,4 +1,4 @@
-import type { SlideContent, BrandColors } from './types'
+import type { SlideContent, BrandColors, Template } from './types'
 
 function escapeHtml(s: string): string {
   return s
@@ -282,13 +282,274 @@ function imageTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: strin
   </body></html>`
 }
 
+// ─── Editorial template (Twitter/X card style) ────────────────────────────────
+
+function editorialHeader(colors: BrandColors, logoUrl: string | undefined, slideNum: number, total: number): string {
+  const avatarContent = logoUrl
+    ? `<img src="${escapeHtml(logoUrl)}" style="width:100%;height:100%;object-fit:contain;border-radius:50%;" />`
+    : `<div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,${colors.primary},${colors.secondary});"></div>`
+
+  return `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:44px 64px 28px;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:18px;">
+        <div style="width:64px;height:64px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2.5px solid ${colors.primary}22;">
+          ${avatarContent}
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:26px;font-weight:800;color:#0F172A;font-family:'Inter','Helvetica Neue',Arial,sans-serif;">SocialMind</span>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="${colors.primary}"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+          </div>
+          <span style="font-size:21px;color:#64748B;font-family:'Inter','Helvetica Neue',Arial,sans-serif;">@socialmind</span>
+        </div>
+      </div>
+      <span style="font-size:22px;color:#94A3B8;font-family:'Inter','Helvetica Neue',Arial,sans-serif;">${slideNum}/${total}</span>
+    </div>`
+}
+
+function editorialFooter(colors: BrandColors): string {
+  return `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 64px 40px;flex-shrink:0;border-top:1px solid #F1F5F9;">
+      <div style="display:flex;align-items:center;gap:32px;">
+        <div style="display:flex;align-items:center;gap:10px;color:#94A3B8;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <span style="font-size:22px;font-family:'Inter','Helvetica Neue',Arial,sans-serif;">Curtir</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;color:#94A3B8;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          <span style="font-size:22px;font-family:'Inter','Helvetica Neue',Arial,sans-serif;">Compartilhar</span>
+        </div>
+      </div>
+      <span style="font-size:22px;color:${colors.primary};font-weight:600;font-family:'Inter','Helvetica Neue',Arial,sans-serif;">ver mais →</span>
+    </div>`
+}
+
+function editorialCoverTemplate(slide: SlideContent, colors: BrandColors, slideNum: number, total: number, logoUrl?: string): string {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <style>
+    * { margin:0;padding:0;box-sizing:border-box; }
+    html,body { width:1080px;height:1080px;overflow:hidden;font-family:'Inter','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased; }
+    body { background:#FFFFFF; }
+    .slide { width:1080px;height:1080px;display:flex;flex-direction:column;position:relative;overflow:hidden; }
+    .content { flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:0 64px 32px; }
+  </style></head><body>
+  <div class="slide">
+    ${editorialHeader(colors, logoUrl, slideNum, total)}
+    <div class="content">
+      ${slide.subtitle ? `<div style="display:inline-flex;align-items:center;gap:10px;background:${colors.primary}12;border:1.5px solid ${colors.primary}30;padding:10px 24px;border-radius:50px;margin-bottom:36px;align-self:flex-start;">
+        <div style="width:8px;height:8px;border-radius:50%;background:${colors.primary};"></div>
+        <span style="font-size:24px;font-weight:600;color:${colors.primary};text-transform:uppercase;letter-spacing:1.5px;">${escapeHtml(slide.subtitle)}</span>
+      </div>` : ''}
+      <h1 style="font-size:88px;font-weight:900;color:#0F172A;line-height:1.05;letter-spacing:-2px;margin-bottom:32px;">${escapeHtml(slide.title)}</h1>
+      ${slide.body ? `<p style="font-size:36px;color:#475569;line-height:1.55;max-width:880px;">${escapeHtml(slide.body)}</p>` : ''}
+    </div>
+    ${slide.imageUrl ? `<div style="flex-shrink:0;height:280px;margin:0 64px 0;border-radius:20px;overflow:hidden;position:relative;">
+      <img src="${escapeHtml(slide.imageUrl)}" style="width:100%;height:100%;object-fit:cover;" />
+    </div>` : `<div style="flex-shrink:0;height:220px;margin:0 64px;border-radius:20px;background:linear-gradient(135deg,${colors.primary}15,${colors.secondary}15);display:flex;align-items:center;justify-content:center;">
+      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,${colors.primary},${colors.secondary});opacity:0.4;"></div>
+    </div>`}
+    ${editorialFooter(colors)}
+  </div>
+  </body></html>`
+}
+
+function editorialContentTemplate(slide: SlideContent, colors: BrandColors, slideNum: number, total: number, logoUrl?: string): string {
+  const bullets = slide.bullets ?? []
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <style>
+    * { margin:0;padding:0;box-sizing:border-box; }
+    html,body { width:1080px;height:1080px;overflow:hidden;font-family:'Inter','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased; }
+    body { background:#FFFFFF; }
+    .slide { width:1080px;height:1080px;display:flex;flex-direction:column;position:relative;overflow:hidden; }
+    .content { flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;padding:12px 64px 0; }
+  </style></head><body>
+  <div class="slide">
+    ${editorialHeader(colors, logoUrl, slideNum, total)}
+    <div class="content">
+      <h2 style="font-size:62px;font-weight:800;color:#0F172A;line-height:1.12;letter-spacing:-1px;margin-bottom:28px;">${escapeHtml(slide.title)}</h2>
+      ${slide.body ? `<p style="font-size:30px;color:#475569;line-height:1.6;margin-bottom:30px;">${escapeHtml(slide.body)}</p>` : ''}
+      ${bullets.length > 0 ? `<div style="display:flex;flex-direction:column;gap:20px;">
+        ${bullets.map(b => `<div style="display:flex;align-items:flex-start;gap:20px;">
+          <span style="font-size:30px;font-weight:700;color:${colors.primary};flex-shrink:0;line-height:1.5;">→</span>
+          <span style="font-size:30px;color:#334155;line-height:1.5;">${escapeHtml(b)}</span>
+        </div>`).join('')}
+      </div>` : ''}
+    </div>
+    ${editorialFooter(colors)}
+  </div>
+  </body></html>`
+}
+
+function editorialCtaTemplate(slide: SlideContent, colors: BrandColors, slideNum: number, total: number, logoUrl?: string): string {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <style>
+    * { margin:0;padding:0;box-sizing:border-box; }
+    html,body { width:1080px;height:1080px;overflow:hidden;font-family:'Inter','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased; }
+    body { background:#FFFFFF; }
+    .slide { width:1080px;height:1080px;display:flex;flex-direction:column;position:relative;overflow:hidden; }
+    .content { flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:0 64px; }
+  </style></head><body>
+  <div class="slide">
+    ${editorialHeader(colors, logoUrl, slideNum, total)}
+    <div class="content">
+      <h2 style="font-size:74px;font-weight:900;color:#0F172A;line-height:1.08;letter-spacing:-1.5px;margin-bottom:32px;">${escapeHtml(slide.title)}</h2>
+      ${slide.body ? `<p style="font-size:32px;color:#475569;line-height:1.6;margin-bottom:48px;max-width:880px;">${escapeHtml(slide.body)}</p>` : ''}
+      ${slide.cta ? `<div style="display:inline-flex;align-items:center;gap:14px;padding:28px 60px;border-radius:16px;background:linear-gradient(135deg,${colors.primary},${colors.secondary});box-shadow:0 16px 48px ${colors.primary}40;">
+        <span style="font-size:34px;font-weight:700;color:#fff;">${escapeHtml(slide.cta)}</span>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>` : ''}
+    </div>
+    ${editorialFooter(colors)}
+  </div>
+  </body></html>`
+}
+
+function editorialSlideHtml(slide: SlideContent, colors: BrandColors, slideIndex: number, total: number, logoUrl?: string): string {
+  switch (slide.type) {
+    case 'cover': return editorialCoverTemplate(slide, colors, slideIndex, total, logoUrl)
+    case 'cta':   return editorialCtaTemplate(slide, colors, slideIndex, total, logoUrl)
+    default:      return editorialContentTemplate(slide, colors, slideIndex, total, logoUrl)
+  }
+}
+
+// ─── Dark template (dark mode, bold) ─────────────────────────────────────────
+
+function darkLogoHtml(logoUrl: string | undefined): string {
+  if (!logoUrl) return ''
+  return `<div style="position:absolute;bottom:40px;right:44px;width:72px;height:72px;border-radius:14px;background:rgba(255,255,255,0.1);padding:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+    <img src="${escapeHtml(logoUrl)}" style="max-width:100%;max-height:100%;object-fit:contain;" />
+  </div>`
+}
+
+function darkCoverTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: string): string {
+  const hasImage = !!slide.imageUrl
+  const bodyBg = hasImage
+    ? `background-image:linear-gradient(rgba(0,0,0,0.65),rgba(0,0,0,0.65)),url('${slide.imageUrl}');background-size:cover;background-position:center;`
+    : `background:#0F172A;`
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <style>
+    * { margin:0;padding:0;box-sizing:border-box; }
+    html,body { width:1080px;height:1080px;overflow:hidden;font-family:'Inter','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased; }
+    body { ${bodyBg} }
+    .slide { width:1080px;height:1080px;position:relative;display:flex;flex-direction:column;overflow:hidden; }
+    .top-bar { height:6px;background:linear-gradient(90deg,${colors.primary},${colors.secondary});flex-shrink:0; }
+    .content { flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;padding:0 88px;position:relative;z-index:1; }
+  </style></head><body>
+  <div class="slide">
+    <div class="top-bar"></div>
+    <div class="content">
+      ${slide.subtitle ? `<div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:40px;align-self:flex-start;">
+        <div style="width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,${colors.primary},${colors.secondary});"></div>
+        <span style="font-size:26px;font-weight:600;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:2px;">${escapeHtml(slide.subtitle)}</span>
+      </div>` : ''}
+      <h1 style="font-size:96px;font-weight:900;color:#FFFFFF;line-height:1.02;letter-spacing:-2.5px;margin-bottom:40px;">${escapeHtml(slide.title)}</h1>
+      ${slide.body ? `<p style="font-size:38px;color:rgba(255,255,255,0.6);line-height:1.5;max-width:860px;">${escapeHtml(slide.body)}</p>` : ''}
+      <div style="position:absolute;bottom:60px;left:0;display:flex;align-items:center;gap:12px;color:rgba(255,255,255,0.5);font-size:24px;">
+        Deslize
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+    ${darkLogoHtml(logoUrl)}
+  </div>
+  </body></html>`
+}
+
+function darkContentTemplate(slide: SlideContent, colors: BrandColors, slideNum: number, total: number, logoUrl?: string): string {
+  const bullets = slide.bullets ?? []
+  const hasImage = !!slide.imageUrl
+  const bodyBg = hasImage
+    ? `background-image:linear-gradient(rgba(0,0,0,0.65),rgba(0,0,0,0.65)),url('${slide.imageUrl}');background-size:cover;background-position:center;`
+    : `background:#0F172A;`
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <style>
+    * { margin:0;padding:0;box-sizing:border-box; }
+    html,body { width:1080px;height:1080px;overflow:hidden;font-family:'Inter','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased; }
+    body { ${bodyBg} }
+    .slide { width:1080px;height:1080px;position:relative;display:flex;flex-direction:column;overflow:hidden; }
+    .top-bar { height:6px;background:linear-gradient(90deg,${colors.primary},${colors.secondary});flex-shrink:0; }
+    .content { flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-between;padding:56px 80px 64px; }
+  </style></head><body>
+  <div class="slide">
+    <div class="top-bar"></div>
+    <div class="content">
+      <div>
+        <p style="font-size:26px;color:rgba(255,255,255,0.4);font-weight:500;margin-bottom:22px;font-family:'Inter','Helvetica Neue',Arial,sans-serif;"><span style="color:${colors.primary};font-weight:700;">${slideNum}</span> / ${total}</p>
+        <h2 style="font-size:66px;font-weight:800;color:#FFFFFF;line-height:1.12;letter-spacing:-1px;margin-bottom:28px;">${escapeHtml(slide.title)}</h2>
+        ${slide.body ? `<p style="font-size:30px;color:rgba(255,255,255,0.7);line-height:1.6;margin-bottom:28px;">${escapeHtml(slide.body)}</p>` : ''}
+        ${bullets.length > 0 ? `<div style="display:flex;flex-direction:column;gap:20px;">
+          ${bullets.map(b => `<div style="display:flex;align-items:flex-start;gap:20px;">
+            <div style="flex-shrink:0;width:12px;height:12px;border-radius:50%;background:linear-gradient(135deg,${colors.primary},${colors.secondary});margin-top:12px;"></div>
+            <span style="font-size:30px;color:rgba(255,255,255,0.7);line-height:1.5;">${escapeHtml(b)}</span>
+          </div>`).join('')}
+        </div>` : ''}
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        ${slide.footer ? `<span style="font-size:23px;color:rgba(255,255,255,0.35);">${escapeHtml(slide.footer)}</span>` : '<span></span>'}
+        <div style="display:flex;gap:8px;">
+          ${Array.from({ length: total }, (_, i) => `<div style="width:10px;height:10px;border-radius:50%;background:${i + 1 === slideNum ? colors.primary : 'rgba(255,255,255,0.2)'};"></div>`).join('')}
+        </div>
+      </div>
+    </div>
+    ${darkLogoHtml(logoUrl)}
+  </div>
+  </body></html>`
+}
+
+function darkCtaTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: string): string {
+  const hasImage = !!slide.imageUrl
+  const bodyBg = hasImage
+    ? `background-image:linear-gradient(rgba(0,0,0,0.65),rgba(0,0,0,0.65)),url('${slide.imageUrl}');background-size:cover;background-position:center;`
+    : `background:#0F172A;`
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <style>
+    * { margin:0;padding:0;box-sizing:border-box; }
+    html,body { width:1080px;height:1080px;overflow:hidden;font-family:'Inter','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased; }
+    body { ${bodyBg} }
+    .slide { width:1080px;height:1080px;position:relative;display:flex;flex-direction:column;overflow:hidden; }
+    .top-bar { height:6px;background:linear-gradient(90deg,${colors.primary},${colors.secondary});flex-shrink:0; }
+    .content { flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0 88px;text-align:center; }
+  </style></head><body>
+  <div class="slide">
+    <div class="top-bar"></div>
+    <div class="content">
+      <h2 style="font-size:80px;font-weight:900;color:#FFFFFF;line-height:1.07;letter-spacing:-2px;margin-bottom:36px;">${escapeHtml(slide.title)}</h2>
+      ${slide.body ? `<p style="font-size:36px;color:rgba(255,255,255,0.8);line-height:1.55;max-width:860px;margin-bottom:64px;">${escapeHtml(slide.body)}</p>` : ''}
+      ${slide.cta ? `<div style="display:inline-flex;align-items:center;gap:14px;padding:30px 72px;border-radius:20px;background:linear-gradient(135deg,${colors.primary},${colors.secondary});box-shadow:0 20px 60px ${colors.primary}50;">
+        <span style="font-size:36px;font-weight:700;color:#fff;">${escapeHtml(slide.cta)}</span>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>` : ''}
+    </div>
+    ${darkLogoHtml(logoUrl)}
+  </div>
+  </body></html>`
+}
+
+function darkSlideHtml(slide: SlideContent, colors: BrandColors, slideIndex: number, total: number, logoUrl?: string): string {
+  switch (slide.type) {
+    case 'cover': return darkCoverTemplate(slide, colors, logoUrl)
+    case 'cta':   return darkCtaTemplate(slide, colors, logoUrl)
+    default:      return darkContentTemplate(slide, colors, slideIndex, total, logoUrl)
+  }
+}
+
 export function buildSlideHtml(
   slide: SlideContent,
   colors: BrandColors,
   slideIndex: number,
   total: number,
-  logoUrl?: string
+  logoUrl?: string,
+  template: Template = 'classic'
 ): string {
+  if (template === 'editorial') {
+    return editorialSlideHtml(slide, colors, slideIndex, total, logoUrl)
+  }
+  if (template === 'dark') {
+    return darkSlideHtml(slide, colors, slideIndex, total, logoUrl)
+  }
+  // classic (existing switch)
   switch (slide.type) {
     case 'cover':
       return coverTemplate(slide, colors, logoUrl)

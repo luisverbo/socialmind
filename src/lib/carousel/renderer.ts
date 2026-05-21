@@ -1,5 +1,5 @@
 import { buildSlideHtml } from './templates'
-import type { SlideContent, BrandColors } from './types'
+import type { SlideContent, BrandColors, Template } from './types'
 
 const RENDERER_URL = process.env.RENDERER_URL    // ex: http://2.24.210.233:3001
 const RENDERER_KEY = process.env.RENDERER_API_KEY
@@ -112,9 +112,10 @@ export async function renderSlide(
   colors: BrandColors,
   slideIndex: number,
   total: number,
-  logoDataUri?: string        // já deve ser data URI, não URL externa
+  logoDataUri?: string,       // já deve ser data URI, não URL externa
+  template: Template = 'classic'
 ): Promise<Buffer> {
-  const html = buildSlideHtml(slide, colors, slideIndex, total, logoDataUri)
+  const html = buildSlideHtml(slide, colors, slideIndex, total, logoDataUri, template)
 
   if (RENDERER_URL && RENDERER_KEY) {
     try {
@@ -147,7 +148,8 @@ async function resolveSlideImages(slides: SlideContent[]): Promise<SlideContent[
 export async function renderAllSlides(
   slides: SlideContent[],
   colors: BrandColors,
-  logoUrl?: string
+  logoUrl?: string,
+  template: Template = 'classic'
 ): Promise<Buffer[]> {
   // Converte URL externa → base64 UMA vez antes de renderizar todos os slides
   const logoDataUri = await logoToDataUri(logoUrl)
@@ -159,6 +161,6 @@ export async function renderAllSlides(
   const resolvedSlides = await resolveSlideImages(slides)
 
   return Promise.all(
-    resolvedSlides.map((slide, i) => renderSlide(slide, colors, i + 1, resolvedSlides.length, logoDataUri))
+    resolvedSlides.map((slide, i) => renderSlide(slide, colors, i + 1, resolvedSlides.length, logoDataUri, template))
   )
 }

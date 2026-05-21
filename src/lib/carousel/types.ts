@@ -24,6 +24,8 @@ export interface CarouselContent {
 
 export type Tone = 'educational' | 'motivational' | 'promotional' | 'journalistic'
 
+export type Template = 'classic' | 'editorial' | 'dark'
+
 export interface GenerateCarouselInput {
   companyId: string
   scheduleId: string | null
@@ -32,6 +34,7 @@ export interface GenerateCarouselInput {
   slidesCount: number
   publishMode: 'automatic' | 'review'
   scheduledFor?: string | null  // ISO string, optional
+  template?: Template
 }
 
 export interface CompanyContext {
