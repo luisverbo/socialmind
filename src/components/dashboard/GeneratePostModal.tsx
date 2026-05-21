@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Sparkles, Calendar, RotateCcw, AlertCircle } from 'lucide-react'
+import { X, Sparkles, Calendar, RotateCcw, AlertCircle, ImageIcon } from 'lucide-react'
 import { useCompany } from '@/hooks/useCompany'
 import { supabase } from '@/lib/supabase'
 import type { ContentTheme } from '@/types/scheduling'
@@ -52,6 +52,7 @@ export default function GeneratePostModal({ open, onClose, themes }: Props) {
   const [tone,         setTone]         = useState<'educational' | 'motivational' | 'promotional' | 'journalistic'>('educational')
   const [slides,       setSlides]       = useState<5 | 7 | 10>(7)
   const [mode,         setMode]         = useState<'review' | 'automatic'>('review')
+  const [useImages,    setUseImages]    = useState(false)
   const [scheduleDate, setScheduleDate] = useState('')
   const [scheduleTime, setScheduleTime] = useState('')
 
@@ -99,6 +100,7 @@ export default function GeneratePostModal({ open, onClose, themes }: Props) {
     setTone('educational')
     setSlides(7)
     setMode('review')
+    setUseImages(false)
     setScheduleDate('')
     setScheduleTime('')
     setSuggDismissed(false)
@@ -184,6 +186,7 @@ export default function GeneratePostModal({ open, onClose, themes }: Props) {
           tone,
           slides_count:  slides,
           publish_mode:  mode,
+          use_images:    useImages,
           scheduled_for: scheduledFor,
         }),
       })
@@ -378,6 +381,37 @@ export default function GeneratePostModal({ open, onClose, themes }: Props) {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Use images toggle */}
+                <div>
+                  <label className="form-label">Foto de fundo nos slides</label>
+                  <button
+                    type="button"
+                    onClick={() => setUseImages(v => !v)}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                      useImages
+                        ? 'bg-[#F8F7FF] border-[#6C3FE8]'
+                        : 'bg-white border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <ImageIcon size={15} className={useImages ? 'text-[#6C3FE8]' : 'text-gray-400'} />
+                      <div className="text-left">
+                        <p className={`text-xs font-semibold ${useImages ? 'text-[#6C3FE8]' : 'text-[#1A1A2E]'}`}>
+                          {useImages ? 'Com foto de fundo' : 'Sem foto de fundo'}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {useImages
+                            ? 'Usa sua biblioteca ou busca no Unsplash'
+                            : 'Slides apenas com cor e texto'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className={`w-10 h-5 rounded-full transition-colors flex items-center ${useImages ? 'bg-[#6C3FE8]' : 'bg-gray-200'}`}>
+                      <div className={`w-4 h-4 rounded-full bg-white shadow transition-transform mx-0.5 ${useImages ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </div>
+                  </button>
                 </div>
 
                 {/* Mode */}

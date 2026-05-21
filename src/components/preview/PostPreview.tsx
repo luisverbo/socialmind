@@ -197,7 +197,7 @@ export default function PostPreview({ post: initialPost }: Props) {
           {/* Slide viewer */}
           <div className="space-y-4">
             <div className="card overflow-hidden">
-              <div className="relative aspect-square bg-gray-100">
+              <div className="relative aspect-square bg-gray-100 group/slide">
                 {images[current] ? (
                   <>
                     <Image
@@ -207,7 +207,17 @@ export default function PostPreview({ post: initialPost }: Props) {
                       className="object-cover"
                       priority
                     />
-                    {regeneratingSlide === current && (
+                    {/* Swap image overlay button */}
+                    {swappingSlide !== current && regeneratingSlide !== current && (
+                      <button
+                        onClick={() => { setSwapSlideIndex(current); setSwapModalOpen(true) }}
+                        className="absolute bottom-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white text-xs font-medium opacity-0 group-hover/slide:opacity-100 transition-opacity backdrop-blur-sm"
+                      >
+                        <ImageIcon size={12} />
+                        Trocar foto
+                      </button>
+                    )}
+                    {(regeneratingSlide === current || swappingSlide === current) && (
                       <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
                         <Loader2 size={32} className="text-[#6C3FE8] animate-spin" />
                       </div>
@@ -254,7 +264,7 @@ export default function PostPreview({ post: initialPost }: Props) {
                     {swappingSlide === current
                       ? <Loader2 size={13} className="animate-spin" />
                       : <ImageIcon size={13} />}
-                    Trocar imagem
+                    Trocar foto
                   </button>
                   <button
                     onClick={() => handleRegenerateSlide(current)}
@@ -262,7 +272,7 @@ export default function PostPreview({ post: initialPost }: Props) {
                     className="flex items-center gap-1.5 text-xs font-medium text-[#6C3FE8] hover:text-[#5B34D1] transition-colors disabled:opacity-50"
                   >
                     <RefreshCw size={13} className={regeneratingSlide === current ? 'animate-spin' : ''} />
-                    Regenerar
+                    Regenerar slide
                   </button>
                 </div>
               </div>

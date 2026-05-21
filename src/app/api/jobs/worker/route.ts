@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
     tone:         'educational' | 'motivational' | 'promotional' | 'journalistic'
     slidesCount:  number
     publishMode:  'automatic' | 'review'
+    useImages:    boolean
     scheduledFor: string | null
   }
 
@@ -65,61 +66,64 @@ export async function POST(req: NextRequest) {
     const { generateCarouselContent } = await import('@/lib/carousel/generator')
     const carousel = await generateCarouselContent(ctx, media ?? [], p.theme, p.tone, p.slidesCount)
 
-    // ── Assign images to slides ─────────────────────────────────────────────
+    // ── Assign images to slides (only if user opted in) ────────────────────
     const unsplashCredits: UnsplashCredit[] = []
-    const mediaByCategory: Record<string, string[]> = {}
-    ;(media ?? []).forEach(m => {
-      if (!mediaByCategory[m.category]) mediaByCategory[m.category] = []
-      mediaByCategory[m.category].push(m.url)
-    })
 
-    const pickMedia = (categories: string[]): string | undefined => {
-      for (const cat of categories) {
-        const urls = mediaByCategory[cat]
-        if (urls?.length) return urls[Math.floor(Math.random() * urls.length)]
+    if (p.useImages) {
+      const mediaByCategory: Record<string, string[]> = {}
+      ;(media ?? []).forEach(m => {
+        if (!mediaByCategory[m.category]) mediaByCategory[m.category] = []
+        mediaByCategory[m.category].push(m.url)
+      })
+
+      const pickMedia = (categories: string[]): string | undefined => {
+        for (const cat of categories) {
+          const urls = mediaByCategory[cat]
+          if (urls?.length) return urls[Math.floor(Math.random() * urls.length)]
+        }
+        return undefined
       }
-      return undefined
-    }
 
-    // Assign imageUrl for cover and CTA slides
-    for (let i = 0; i < carousel.slides.length; i++) {
-      const slide = carousel.slides[i]
-      const isFirst = i === 0
-      const isLast  = i === carousel.slides.length - 1
+      // Assign imageUrl for cover and CTA slides
+      for (let i = 0; i < carousel.slides.length; i++) {
+        const slide = carousel.slides[i]
+        const isFirst = i === 0
+        const isLast  = i === carousel.slides.length - 1
 
-      if (!isFirst && !isLast) continue  // only cover + CTA get images
+        if (!isFirst && !isLast) continue  // only cover + CTA get images
 
-      let imageUrl: string | undefined
+        let imageUrl: string | undefined
 
-      if (isFirst) {
-        // Priority 1: client media (brand/product/structure)
-        imageUrl = pickMedia(['brand', 'product', 'structure'])
-        // Priority 2: Unsplash with Claude's keyword or theme
-        if (!imageUrl) {
-          const keyword = slide.imageKeyword ?? p.theme
-          const photo = await searchUnsplashPhoto(keyword)
-          if (photo) {
-            imageUrl = photo.url
-            unsplashCredits.push({ ...photo, slideIndex: i })
+        if (isFirst) {
+          // Priority 1: client media (brand/product/structure)
+          imageUrl = pickMedia(['brand', 'product', 'structure'])
+          // Priority 2: Unsplash with Claude's keyword or theme
+          if (!imageUrl) {
+            const keyword = slide.imageKeyword ?? p.theme
+            const photo = await searchUnsplashPhoto(keyword)
+            if (photo) {
+              imageUrl = photo.url
+              unsplashCredits.push({ ...photo, slideIndex: i })
+            }
           }
         }
-      }
 
-      if (isLast) {
-        // Priority 1: client media (team/brand)
-        imageUrl = pickMedia(['team', 'brand'])
-        // Priority 2: Unsplash professional portrait
-        if (!imageUrl) {
-          const photo = await searchUnsplashPhoto('professional team business portrait')
-          if (photo) {
-            imageUrl = photo.url
-            unsplashCredits.push({ ...photo, slideIndex: i })
+        if (isLast) {
+          // Priority 1: client media (team/brand)
+          imageUrl = pickMedia(['team', 'brand'])
+          // Priority 2: Unsplash professional portrait
+          if (!imageUrl) {
+            const photo = await searchUnsplashPhoto('professional team business portrait')
+            if (photo) {
+              imageUrl = photo.url
+              unsplashCredits.push({ ...photo, slideIndex: i })
+            }
           }
         }
-      }
 
-      if (imageUrl) {
-        carousel.slides[i] = { ...slide, imageUrl }
+        if (imageUrl) {
+          carousel.slides[i] = { ...slide, imageUrl }
+        }
       }
     }
 

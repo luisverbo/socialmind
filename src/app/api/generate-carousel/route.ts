@@ -14,7 +14,7 @@ function adminClient() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { company_id, schedule_id, theme, tone, slides_count, publish_mode, scheduled_for } = body
+    const { company_id, schedule_id, theme, tone, slides_count, publish_mode, use_images, scheduled_for } = body
 
     if (!company_id || !theme || !tone || !slides_count) {
       return NextResponse.json(
@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
       tone,
       slidesCount:  Number(slides_count),
       publishMode:  publish_mode ?? 'review',
+      useImages:    use_images === true,
       scheduledFor: scheduled_for ?? null,
     }
 
