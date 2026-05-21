@@ -9,9 +9,10 @@ const TONE_OPTS = [
   { value: 'educational',  label: 'Educativo',    emoji: '📚' },
   { value: 'motivational', label: 'Motivacional', emoji: '🔥' },
   { value: 'promotional',  label: 'Promocional',  emoji: '🛍️' },
+  { value: 'journalistic', label: 'Jornalístico', emoji: '📰' },
 ] as const
 
-type Tone = 'educational' | 'motivational' | 'promotional'
+type Tone = 'educational' | 'motivational' | 'promotional' | 'journalistic'
 
 interface Theme {
   id:         string

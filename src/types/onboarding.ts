@@ -6,7 +6,7 @@ export interface BrandColors {
 
 export interface ContentTheme {
   themeName: string
-  tone: 'educational' | 'motivational' | 'promotional'
+  tone: 'educational' | 'motivational' | 'promotional' | 'journalistic'
   slidesCount: 5 | 7 | 10
 }
 

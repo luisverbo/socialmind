@@ -11,6 +11,7 @@ const TONE_OPTS = [
   { value: 'educational',  label: 'Educativo',    emoji: '📚' },
   { value: 'motivational', label: 'Motivacional', emoji: '🔥' },
   { value: 'promotional',  label: 'Promocional',  emoji: '🛍️' },
+  { value: 'journalistic', label: 'Jornalístico', emoji: '📰' },
 ] as const
 
 const SLIDES_OPTS = [5, 7, 10] as const
@@ -29,7 +30,7 @@ function progressMessage(elapsed: number, status: string) {
 interface WeeklyEntry {
   day_of_week: number
   theme_id:    string | null
-  tone:        'educational' | 'motivational' | 'promotional'
+  tone:        'educational' | 'motivational' | 'promotional' | 'journalistic'
   enabled:     boolean
 }
 
@@ -48,7 +49,7 @@ export default function GeneratePostModal({ open, onClose, themes }: Props) {
   // form
   const [themeId,      setThemeId]      = useState('')
   const [customTheme,  setCustomTheme]  = useState('')
-  const [tone,         setTone]         = useState<'educational' | 'motivational' | 'promotional'>('educational')
+  const [tone,         setTone]         = useState<'educational' | 'motivational' | 'promotional' | 'journalistic'>('educational')
   const [slides,       setSlides]       = useState<5 | 7 | 10>(7)
   const [mode,         setMode]         = useState<'review' | 'automatic'>('review')
   const [scheduleDate, setScheduleDate] = useState('')

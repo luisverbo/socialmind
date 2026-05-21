@@ -8,6 +8,7 @@ const TONE_OPTIONS = [
   { value: 'educational',   label: 'Educativo',     emoji: '📚', color: 'blue' },
   { value: 'motivational',  label: 'Motivacional',  emoji: '🔥', color: 'orange' },
   { value: 'promotional',   label: 'Promocional',   emoji: '🛍️',  color: 'green' },
+  { value: 'journalistic',  label: 'Jornalístico',  emoji: '📰', color: 'slate' },
 ] as const
 
 const SLIDES_OPTIONS = [5, 7, 10] as const
@@ -25,6 +26,7 @@ const emptyTheme = (): ContentTheme => ({ themeName: '', tone: 'educational', sl
 const toneColor = (tone: string) => {
   if (tone === 'educational')  return 'bg-blue-50 border-blue-200 text-blue-600'
   if (tone === 'motivational') return 'bg-orange-50 border-orange-200 text-orange-600'
+  if (tone === 'journalistic') return 'bg-slate-50 border-slate-200 text-slate-700'
   return 'bg-green-50 border-green-200 text-green-600'
 }
 

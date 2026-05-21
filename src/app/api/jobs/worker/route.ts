@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { searchUnsplashPhoto } from '@/lib/unsplash'
+import type { UnsplashCredit } from '@/lib/carousel/types'
 
 export const runtime    = 'nodejs'
 export const maxDuration = 300
@@ -39,7 +41,7 @@ export async function POST(req: NextRequest) {
 
   const p = job.params as {
     theme:        string
-    tone:         'educational' | 'motivational' | 'promotional'
+    tone:         'educational' | 'motivational' | 'promotional' | 'journalistic'
     slidesCount:  number
     publishMode:  'automatic' | 'review'
     scheduledFor: string | null
@@ -63,6 +65,64 @@ export async function POST(req: NextRequest) {
     const { generateCarouselContent } = await import('@/lib/carousel/generator')
     const carousel = await generateCarouselContent(ctx, media ?? [], p.theme, p.tone, p.slidesCount)
 
+    // ── Assign images to slides ─────────────────────────────────────────────
+    const unsplashCredits: UnsplashCredit[] = []
+    const mediaByCategory: Record<string, string[]> = {}
+    ;(media ?? []).forEach(m => {
+      if (!mediaByCategory[m.category]) mediaByCategory[m.category] = []
+      mediaByCategory[m.category].push(m.url)
+    })
+
+    function pickMedia(categories: string[]): string | undefined {
+      for (const cat of categories) {
+        const urls = mediaByCategory[cat]
+        if (urls?.length) return urls[Math.floor(Math.random() * urls.length)]
+      }
+      return undefined
+    }
+
+    // Assign imageUrl for cover and CTA slides
+    for (let i = 0; i < carousel.slides.length; i++) {
+      const slide = carousel.slides[i]
+      const isFirst = i === 0
+      const isLast  = i === carousel.slides.length - 1
+
+      if (!isFirst && !isLast) continue  // only cover + CTA get images
+
+      let imageUrl: string | undefined
+
+      if (isFirst) {
+        // Priority 1: client media (brand/product/structure)
+        imageUrl = pickMedia(['brand', 'product', 'structure'])
+        // Priority 2: Unsplash with Claude's keyword or theme
+        if (!imageUrl) {
+          const keyword = slide.imageKeyword ?? p.theme
+          const photo = await searchUnsplashPhoto(keyword)
+          if (photo) {
+            imageUrl = photo.url
+            unsplashCredits.push({ ...photo, slideIndex: i })
+          }
+        }
+      }
+
+      if (isLast) {
+        // Priority 1: client media (team/brand)
+        imageUrl = pickMedia(['team', 'brand'])
+        // Priority 2: Unsplash professional portrait
+        if (!imageUrl) {
+          const photo = await searchUnsplashPhoto('professional team business portrait')
+          if (photo) {
+            imageUrl = photo.url
+            unsplashCredits.push({ ...photo, slideIndex: i })
+          }
+        }
+      }
+
+      if (imageUrl) {
+        carousel.slides[i] = { ...slide, imageUrl }
+      }
+    }
+
     // ── Render slides ─────────────────────────────────────────────────────────
     const { renderAllSlides } = await import('@/lib/carousel/renderer')
     const brandColors = ctx.brand_colors ?? { primary: '#6C3FE8', secondary: '#E84393', accent: '#A855F7' }
@@ -82,11 +142,12 @@ export async function POST(req: NextRequest) {
     // ── Update post ───────────────────────────────────────────────────────────
     const status = p.publishMode === 'review' ? 'waiting' : 'approved'
     await supabase.from('posts').update({
-      content:       carousel.slides,
-      slides_html:   carousel.slides.map(() => null),
-      slides_images: imageUrls,
-      caption:       carousel.caption,
+      content:          carousel.slides,
+      slides_html:      carousel.slides.map(() => null),
+      slides_images:    imageUrls,
+      caption:          carousel.caption,
       status,
+      ...(unsplashCredits.length > 0 ? { unsplash_credits: unsplashCredits } : {}),
     }).eq('id', postId)
 
     // ── Deduct credits ────────────────────────────────────────────────────────

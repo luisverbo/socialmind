@@ -15,7 +15,7 @@ export interface Company {
 export interface ContentTheme {
   id: string
   theme_name: string
-  tone: 'educational' | 'motivational' | 'promotional'
+  tone: 'educational' | 'motivational' | 'promotional' | 'journalistic'
   slides_count: number
 }
 
