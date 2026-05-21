@@ -76,8 +76,30 @@ export default function MediaPage() {
 
   const remove = async (item: MediaItem) => {
     if (!confirm('Deletar esta imagem?')) return
+    // Optimistic remove
     setItems(prev => prev.filter(i => i.id !== item.id))
-    await supabase.from('media_library').delete().eq('id', item.id)
+
+    // Delete from DB
+    const { error: dbErr } = await supabase.from('media_library').delete().eq('id', item.id)
+    if (dbErr) {
+      // Revert on failure
+      setItems(prev => [item, ...prev].sort((a, b) => b.created_at.localeCompare(a.created_at)))
+      setError('Erro ao deletar: ' + dbErr.message)
+      return
+    }
+
+    // Delete from storage (best-effort — path embedded in URL)
+    try {
+      const urlObj = new URL(item.url)
+      // URL format: /storage/v1/object/public/media-library/<path>
+      const prefix = '/storage/v1/object/public/media-library/'
+      const storagePath = urlObj.pathname.startsWith(prefix)
+        ? urlObj.pathname.slice(prefix.length)
+        : null
+      if (storagePath) {
+        await supabase.storage.from('media-library').remove([storagePath])
+      }
+    } catch { /* non-fatal */ }
   }
 
   const updateDesc = async (id: string, description: string) => {
