@@ -125,14 +125,25 @@ export default function WeeklyCalendar({ companyId, onNewSchedule }: { companyId
                       {dayPosts.map(post => {
                         const cfg   = STATUS_CONFIG[post.status]
                         const theme = (post.post_schedules as { content_themes?: { theme_name: string } | null } | null)?.content_themes
+
+                        // Get title from first slide (cover), fallback to theme name
+                        const slides = Array.isArray(post.content) ? post.content : []
+                        const postTitle = (slides[0] as { title?: string } | undefined)?.title
+                          || theme?.theme_name
+                          || null
+
                         return (
                           <div key={post.id} className={`p-1.5 rounded-lg border text-xs cursor-pointer hover:shadow-sm transition-all ${cfg.badge}`}>
                             <div className="flex items-center gap-1 mb-0.5">
                               <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
                               <span className="font-semibold truncate">{post.scheduled_for ? fmtTime(post.scheduled_for) : '--:--'}</span>
                             </div>
-                            {theme && <p className="truncate text-[10px] opacity-70 leading-tight">{theme.theme_name}</p>}
-                            <p className="text-[10px] font-medium mt-0.5 opacity-80">{cfg.label}</p>
+                            {postTitle && (
+                              <p className="truncate text-[10px] font-medium leading-tight mt-0.5 opacity-90">
+                                {postTitle}
+                              </p>
+                            )}
+                            <p className="text-[10px] mt-0.5 opacity-60">{cfg.label}</p>
                           </div>
                         )
                       })}
