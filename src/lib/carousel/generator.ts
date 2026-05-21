@@ -362,35 +362,64 @@ Cada bullet deve conter algo que surpreenda — dados reais, números, mecanismo
 
   return `[ID: ${seed}]
 
-Crie um carrossel com ${slidesCount} slides.
-Assunto geral: "${theme}"
+Crie um carrossel com ${slidesCount} slides sobre: "${theme}"
 Tom: ${TONE_MAP[tone]}
 ${angleBlock}${recentSection}${structureSection}
 ${!structureBlock ? HOOK_FORMULAS : ''}
 
-ESTRUTURA DOS SLIDES:
+════════════════════════════════════════
+FIO CONDUTOR — REGRA MAIS IMPORTANTE
+════════════════════════════════════════
+
+Este carrossel conta UMA história com começo, meio e fim.
+Cada slide é um CAPÍTULO — não um post independente.
+
+PROIBIDO:
+✗ Mudar de assunto entre slides
+✗ Repetir a mesma ideia com palavras diferentes
+✗ Slide que poderia existir em OUTRA ordem sem perder sentido
+✗ Bullets soltos sem conexão com o título do slide
+
+OBRIGATÓRIO:
+✓ Slide 2 estabelece o PROBLEMA ou CONTEXTO
+✓ Slides 3 a ${slidesCount - 2} APROFUNDAM em sequência lógica (causa → efeito, problema → solução, antes → depois)
+✓ Slide ${slidesCount - 1} entrega a CONCLUSÃO ou VIRADA
+✓ Slide ${slidesCount} convida à AÇÃO
+
+════════════════════════════════════════
+ESTRUTURA DOS SLIDES
+════════════════════════════════════════
 
 SLIDE 1 — CAPA (type: "cover")
-- title: gancho (máx 9 palavras, sem ponto final)${batchAngle ? ` — use "${batchAngle.hook}" como base` : ''}
-- subtitle: 2-3 palavras da categoria em MAIÚSCULAS
-- body: 1 frase que amplifica a curiosidade (máx 12 palavras)
+- title: gancho que PARA o scroll (máx 9 palavras, sem ponto final)${batchAngle ? ` — use "${batchAngle.hook}" como base` : ''}
+- subtitle: categoria em MAIÚSCULAS (2-3 palavras)
+- body: 1 frase que aumenta a curiosidade sem revelar a resposta (máx 12 palavras)
 
 SLIDES 2 a ${slidesCount - 1} — CONTEÚDO (type: "content")
 ${structureBlock
-    ? `Siga rigorosamente a estrutura definida acima.`
-    : `Cada slide = 1 subtópico específico do assunto.`}
-- title: máx 6 palavras — específico, nunca genérico
-- bullets: exatamente 3 pontos curtos — MÁXIMO 10 palavras cada — cada um DEVE passar no Teste de Especificidade
-- body: 1 frase CURTA de contexto adicional (opcional, máx 12 palavras, apenas se agregar algo novo)
-IMPORTANTE: bullets e body são renderizados em slides 1080×1080px — textos longos serão cortados. Priorize clareza e concisão.
+    ? `Siga a estrutura definida acima — cada slide é um passo da narrativa.`
+    : `Cada slide avança o argumento — não começa um assunto novo, aprofunda o anterior.`}
+- title: máx 6 palavras — específico, diz exatamente o que o slide ensina
+- bullets: exatamente 3 pontos — máx 15 palavras cada — completos, com sentido próprio
+- body: 1 frase de PONTE que conecta com o próximo slide (opcional, máx 15 palavras)
+
+REGRA DOS BULLETS:
+✓ Cada bullet é uma frase completa com sentido próprio
+✓ Os 3 bullets juntos formam um argumento coeso, não 3 dicas aleatórias
+✗ Nunca termine um bullet no meio do raciocínio
+✗ Nunca use bullet que começa com verbo genérico sem contexto ("Faça X", "Use Y")
 
 SLIDE ${slidesCount} — CTA (type: "cta")
-- title: frase de encerramento impactante (não use "conclusão" nem "resumo")
-- body: benefício imediato e concreto de agir agora
-- cta: chamada para ação específica e emocional
-- subtitle: instrução de engajamento nos comentários
-${hasImages ? `\nImagens disponíveis (inclua com type "image" quando fizer sentido):\n${imageUrls.map((u, i) => `${i + 1}. ${u}`).join('\n')}\n` : ''}
-Retorne SOMENTE este JSON:
+- title: frase de impacto que encerra a narrativa (não use "conclusão" nem "resumo")
+- body: o que o leitor pode fazer COM esse conhecimento agora (concreto)
+- cta: chamada à ação específica e emocional
+- subtitle: pergunta que gera comentários
+
+IMPORTANTE — TIPOS DE SLIDE:
+Use APENAS type "cover", "content" e "cta".
+NÃO use type "image" — todos os slides devem ter conteúdo escrito.
+
+Retorne SOMENTE este JSON válido, sem markdown:
 {
   "slides": [
     {"slide":1,"type":"cover","title":"...","subtitle":"...","body":"..."},
@@ -418,9 +447,9 @@ export async function generateCarouselContent(
   const userPrompt   = buildUserPrompt(theme, tone, slidesCount, mediaItems, recentTopics, batchAngle)
 
   const response = await anthropic.messages.create({
-    model:       'claude-sonnet-4-6',   // ← upgraded from haiku
+    model:       'claude-sonnet-4-6',
     max_tokens:  3000,
-    temperature: 1,
+    temperature: 0.8,
     system: [
       {
         type: 'text',

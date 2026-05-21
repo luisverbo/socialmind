@@ -90,10 +90,12 @@ export async function POST(req: NextRequest) {
     }).eq('id', postId)
 
     // ── Deduct credits ────────────────────────────────────────────────────────
-    await supabase.rpc('deduct_credits', {
-      p_company_id: job.company_id,
-      p_amount:     carousel.slides.length,
-    }).catch(() => {}) // non-fatal
+    try {
+      await supabase.rpc('deduct_credits', {
+        p_company_id: job.company_id,
+        p_amount:     carousel.slides.length,
+      })
+    } catch { /* non-fatal */ }
 
     // ── Mark job complete ─────────────────────────────────────────────────────
     await supabase.from('generation_jobs').update({
