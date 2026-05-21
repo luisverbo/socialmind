@@ -322,6 +322,11 @@ function buildUserPrompt(
   const hasImages = imageUrls.length > 0
   const seed      = `${new Date().toISOString().slice(0, 16)}-${Math.random().toString(36).slice(2, 7)}`
 
+  // Build a short media reference list for the image slide instruction
+  const mediaRef = mediaItems.slice(0, 10).map(m =>
+    `- URL: "${m.url}" | Categoria: ${m.category}${m.description ? ` | Descrição: ${m.description}` : ''}`
+  ).join('\n')
+
   // ── Anti-repetition block ──
   const recentSection = recentTopics.length > 0
     ? `\nPOSTS ANTERIORES — evite qualquer semelhança de ideia, título ou ângulo:\n${recentTopics.map((t, i) => `${i + 1}. ${t}`).join('\n')}\n`
@@ -416,8 +421,20 @@ SLIDE ${slidesCount} — CTA (type: "cta")
 - subtitle: pergunta que gera comentários
 
 IMPORTANTE — TIPOS DE SLIDE:
-Use APENAS type "cover", "content" e "cta".
-NÃO use type "image" — todos os slides devem ter conteúdo escrito.
+Use SEMPRE "cover" para slide 1 e "cta" para o último slide.
+Slides intermediários devem ser "content".
+
+${hasImages ? `SLIDE DE FOTO (opcional — use apenas se fizer sentido para o tema):
+Você PODE inserir exatamente 1 slide de foto como slide 2 (logo após a capa).
+Use type "image" com imageUrl apontando para a URL mais relevante da biblioteca abaixo.
+O slide de foto deve ter title (impacto emocional, máx 8 palavras) e body (contexto curto, máx 12 palavras).
+Se usar slide de foto, o total de slides de conteúdo escrito diminui em 1.
+
+IMAGENS DISPONÍVEIS NA BIBLIOTECA:
+${mediaRef}
+
+Escolha a imagem cujo categoria/descrição seja mais relevante para o tema "${theme}".
+Se nenhuma imagem for claramente relevante, não use slide de foto.` : `NÃO use type "image" — não há fotos disponíveis na biblioteca.`}
 
 Retorne SOMENTE este JSON válido, sem markdown:
 {

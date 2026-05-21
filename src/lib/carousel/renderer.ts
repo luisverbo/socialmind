@@ -128,6 +128,22 @@ export async function renderSlide(
   return renderLocally(html)
 }
 
+// ─── Convert external image URLs in slides to base64 data URIs ───────────────
+
+async function resolveSlideImages(slides: SlideContent[]): Promise<SlideContent[]> {
+  return Promise.all(
+    slides.map(async (slide) => {
+      if (!slide.imageUrl || slide.imageUrl.startsWith('data:')) return slide
+      const dataUri = await logoToDataUri(slide.imageUrl) // reuse same fetch + base64 logic
+      if (!dataUri) {
+        console.warn(`[renderer] Não foi possível carregar imageUrl do slide ${slide.slide} — slide sem foto`)
+        return { ...slide, imageUrl: undefined }
+      }
+      return { ...slide, imageUrl: dataUri }
+    })
+  )
+}
+
 export async function renderAllSlides(
   slides: SlideContent[],
   colors: BrandColors,
@@ -139,7 +155,10 @@ export async function renderAllSlides(
     console.log('[renderer] Logo convertido para base64 com sucesso')
   }
 
+  // Converte imageUrl de slides de foto para base64 (evita CORS no Puppeteer)
+  const resolvedSlides = await resolveSlideImages(slides)
+
   return Promise.all(
-    slides.map((slide, i) => renderSlide(slide, colors, i + 1, slides.length, logoDataUri))
+    resolvedSlides.map((slide, i) => renderSlide(slide, colors, i + 1, resolvedSlides.length, logoDataUri))
   )
 }
