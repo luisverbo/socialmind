@@ -91,11 +91,16 @@ export default function WeeklyScheduleSettings() {
       updated_at:  new Date().toISOString(),
     }))
 
-    await supabase
+    const { error } = await supabase
       .from('weekly_theme_schedule')
       .upsert(rows, { onConflict: 'company_id,day_of_week' })
 
     setSaving(false)
+    if (error) {
+      console.error('[WeeklySchedule] upsert error:', error)
+      alert('Erro ao salvar: ' + error.message)
+      return
+    }
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
