@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import {
   createImageContainer,
+  createSingleImageContainer,
   createCarouselContainer,
   publishContainer,
   waitForContainer,
@@ -42,25 +43,36 @@ async function runPublish(postId: string): Promise<string> {
 
   const { access_token_raw: accessToken, instagram_account_id: igUserId } = token
 
-  // 3. Create individual image containers then wait until each is FINISHED
-  const childIds: string[] = []
-  for (const url of images) {
-    const id = await createImageContainer(igUserId, url, accessToken)
-    childIds.push(id)
+  const caption = post.caption ?? ''
+  let igPostId: string
+
+  if (images.length === 1) {
+    // ── Single image post ─────────────────────────────────────────────────
+    // Instagram does NOT support carousel with 1 image — publish as single photo
+    const containerId = await createSingleImageContainer(igUserId, images[0], caption, accessToken)
+    await waitForContainer(containerId, accessToken, 30_000)
+    igPostId = await publishContainer(igUserId, containerId, accessToken)
+  } else {
+    // ── Carousel post (2+ images) ─────────────────────────────────────────────
+    // 3. Create individual image containers then wait until each is FINISHED
+    const childIds: string[] = []
+    for (const url of images) {
+      const id = await createImageContainer(igUserId, url, accessToken)
+      childIds.push(id)
+    }
+    await Promise.all(childIds.map(id => waitForContainer(id, accessToken, 30_000)))
+
+    // Buffer: Instagram marks containers as FINISHED before they're available
+    // in the carousel creation API — a known race condition in the Graph API.
+    await new Promise(r => setTimeout(r, 5000))
+
+    // 4. Create carousel container and wait until it is also FINISHED
+    const carouselId = await createCarouselContainer(igUserId, childIds, caption, accessToken)
+    await waitForContainer(carouselId, accessToken, 30_000)
+
+    // 5. Publish — once this succeeds the post IS live on Instagram
+    igPostId = await publishContainer(igUserId, carouselId, accessToken)
   }
-  await Promise.all(childIds.map(id => waitForContainer(id, accessToken, 30_000)))
-
-  // Buffer: Instagram marks containers as FINISHED before they're available
-  // in the carousel creation API — a known race condition in the Graph API.
-  await new Promise(r => setTimeout(r, 5000))
-
-  // 4. Create carousel container and wait until it is also FINISHED
-  const caption    = post.caption ?? ''
-  const carouselId = await createCarouselContainer(igUserId, childIds, caption, accessToken)
-  await waitForContainer(carouselId, accessToken, 30_000)
-
-  // 5. Publish — once this succeeds the post IS live on Instagram
-  const igPostId = await publishContainer(igUserId, carouselId, accessToken)
 
   // 6. Update post record — critical: must persist igPostId before anything else
   await supabase

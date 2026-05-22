@@ -126,6 +126,24 @@ export async function waitForContainer(
   throw new Error(`Container ${containerId} não ficou pronto em ${maxWaitMs / 1000}s`)
 }
 
+/** Create a single image container (for posts with only 1 image). */
+export async function createSingleImageContainer(
+  igUserId: string,
+  imageUrl: string,
+  caption: string,
+  token: string
+): Promise<string> {
+  const body = new URLSearchParams({
+    image_url:    imageUrl,
+    caption:      caption,
+    access_token: token,
+  })
+  const res = await fetch(`${GRAPH_V}/${igUserId}/media`, { method: 'POST', body })
+  const data = await res.json()
+  if (!res.ok || !data.id) throw new Error(data.error?.message ?? `Erro ao criar container de imagem: ${imageUrl}`)
+  return data.id as string
+}
+
 /** Create a carousel container from individual item IDs. */
 export async function createCarouselContainer(
   igUserId: string,
