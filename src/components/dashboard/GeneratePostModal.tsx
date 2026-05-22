@@ -43,9 +43,10 @@ const DAY_NAMES = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sába
 function progressMessage(elapsed: number, status: string) {
   if (status === 'pending')    return 'Na fila, aguardando…'
   if (elapsed < 15)            return 'Preparando contexto da empresa…'
-  if (elapsed < 30)            return 'IA criando conteúdo dos slides…'
-  if (elapsed < 55)            return 'Renderizando imagens no servidor…'
-  return 'Finalizando e salvando…'
+  if (elapsed < 35)            return 'IA criando conteúdo dos slides…'
+  if (elapsed < 70)            return 'Renderizando imagens no servidor…'
+  if (elapsed < 100)           return 'Quase pronto, finalizando…'
+  return 'Demora um pouco mais que o normal, aguarde…'
 }
 
 interface WeeklyEntry {
@@ -244,7 +245,10 @@ export default function GeneratePostModal({ open, onClose, themes }: Props) {
   }
 
   const isGenerating = jobStatus === 'pending' || jobStatus === 'processing'
-  const progressPct  = Math.min(95, Math.round(elapsed / 70 * 100)) // reaches ~95% at 70s
+  // Progress bar: reaches 90% at 90s, then crawls slowly (never hits 100 until done)
+  const progressPct  = elapsed < 90
+    ? Math.round(elapsed / 90 * 90)
+    : Math.min(98, 90 + Math.round((elapsed - 90) / 60 * 8))
 
   const suggDayName   = DAY_NAMES[(scheduleDate ? new Date(scheduleDate + 'T12:00:00') : new Date()).getDay()]
   const suggThemeName = suggestion ? (themes.find(t => t.id === suggestion.theme_id)?.theme_name ?? '') : ''
@@ -302,7 +306,23 @@ export default function GeneratePostModal({ open, onClose, themes }: Props) {
                     />
                   </div>
                 </div>
-                <p className="text-xs text-center text-gray-400">Processando em segundo plano — pode fechar e voltar depois.</p>
+
+                {/* After 80s, show escape hatch in case post was already created */}
+                {elapsed >= 80 && postId ? (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
+                    <p className="text-xs text-amber-700 text-center font-medium">
+                      Está demorando mais que o normal. O post pode já ter sido criado.
+                    </p>
+                    <button
+                      onClick={() => { stopPolling(); onClose(); router.push(`/preview/${postId}`) }}
+                      className="w-full py-2.5 rounded-xl text-sm font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 transition-colors"
+                    >
+                      Verificar se o post foi criado →
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-center text-gray-400">Processando em segundo plano — pode fechar e verificar depois.</p>
+                )}
               </div>
             )}
 
