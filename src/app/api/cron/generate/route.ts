@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 
   const results: { post_id: string; status: 'ok' | 'error'; detail?: string }[] = []
 
-  // ── Part 1: Generate existing draft posts (recurring + one_time) ─────────────
+  // ── Part 1: Generate existing draft posts (recurring + one_time) ────────────────────
   // On Sunday: generate everything due in next 8 days (weekly batch)
   // On other days: generate anything due in next 2 days
   const cutoff = new Date(now.getTime() + (isWeeklyRun ? 8 : 2) * 24 * 60 * 60 * 1000)
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // ── Part 2: Weekly batch for 'daily' schedules ───────────────────────────────
+  // ── Part 2: Weekly batch for 'daily' schedules ─────────────────────────────────────
   // When a daily schedule has < posts_per_day * 2 days of future posts left,
   // generate the next 7-day batch and notify the client.
   const { data: dailySchedules } = await supabase
@@ -78,6 +78,7 @@ export async function GET(req: NextRequest) {
         : ['09:00:00']
 
       // Count how many future pending posts remain for this schedule
+      // NOTE: rejected posts do NOT count — user wants new content for those slots
       const { count: futureCount } = await supabase
         .from('posts')
         .select('id', { count: 'exact', head: true })
@@ -121,11 +122,12 @@ export async function GET(req: NextRequest) {
       }
 
       // Find the last scheduled_for for this schedule to continue from there
+      // IMPORTANT: include 'rejected' so we don't re-fill a slot the user already rejected
       const { data: lastPost } = await supabase
         .from('posts')
         .select('scheduled_for')
         .eq('schedule_id', sched.id)
-        .in('status', ['draft', 'waiting', 'approved', 'published'])
+        .in('status', ['draft', 'waiting', 'approved', 'published', 'rejected'])
         .order('scheduled_for', { ascending: false })
         .limit(1)
         .single()
@@ -133,6 +135,18 @@ export async function GET(req: NextRequest) {
       const batchStart = lastPost?.scheduled_for
         ? new Date(new Date(lastPost.scheduled_for).getTime() + 86400_000) // day after last post
         : now
+
+      // Collect existing scheduled_for timestamps for this schedule (any status)
+      // so we never create a duplicate post for a slot that already exists
+      const { data: existingSlots } = await supabase
+        .from('posts')
+        .select('scheduled_for')
+        .eq('schedule_id', sched.id)
+        .gte('scheduled_for', batchStart.toISOString())
+
+      const existingSlotSet = new Set(
+        (existingSlots ?? []).map(p => new Date(p.scheduled_for).toISOString())
+      )
 
       // Create draft posts for the new batch
       const newPosts: Record<string, unknown>[] = []
@@ -143,6 +157,8 @@ export async function GET(req: NextRequest) {
           dt.setDate(dt.getDate() + d)
           dt.setHours(h, m, 0, 0)
           if (dt <= now) continue
+          // Skip if a post already exists for this exact slot (any status)
+          if (existingSlotSet.has(dt.toISOString())) continue
           newPosts.push({
             company_id:    sched.company_id,
             schedule_id:   sched.id,
@@ -269,7 +285,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // ── Part 3: Monthly credit reset ─────────────────────────────────────────────
+  // ── Part 3: Monthly credit reset ───────────────────────────────────────────────────
   try {
     await supabase.rpc('reset_monthly_credits')
   } catch (e) {
