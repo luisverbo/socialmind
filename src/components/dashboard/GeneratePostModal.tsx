@@ -191,8 +191,9 @@ export default function GeneratePostModal({ open, onClose, themes }: Props) {
 
     let scheduledFor: string | null = null
     if (scheduleDate && scheduleTime) {
-      const local  = new Date(`${scheduleDate}T${scheduleTime}:00`)
-      scheduledFor = new Date(local.getTime() + 3 * 60 * 60 * 1000).toISOString()
+      // The browser already applies local timezone when parsing without a TZ suffix.
+      // Do NOT add manual offset — it would double-count the UTC-3 difference.
+      scheduledFor = new Date(`${scheduleDate}T${scheduleTime}:00`).toISOString()
     }
 
     setError(null)
