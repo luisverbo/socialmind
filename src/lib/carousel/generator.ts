@@ -362,6 +362,30 @@ function buildUserPrompt(
   const hasImages = imageUrls.length > 0
   const seed      = `${new Date().toISOString().slice(0, 16)}-${Math.random().toString(36).slice(2, 7)}`
 
+  // ── Special case: single image post ──────────────────────────────────────
+  if (slidesCount === 1) {
+    return `[ID: ${seed}]
+
+Crie UMA ÚNICA imagem (post único, não carrossel) sobre: "${theme}"
+Tom: ${TONE_MAP[tone]}
+
+Esta é uma imagem standalone — não uma série de slides. Deve ser COMPLETA e AUTOSSUFICIENTE.
+
+ESTRUTURA DA ÚNICA IMAGEM (type: "cover"):
+- title: frase de impacto que resume o tema em até 9 palavras (sem ponto final)
+- subtitle: categoria ou rótulo em MAIÚSCULAS (2-3 palavras)
+- body: 1-2 frases que complementam o título com o insight principal (máx 20 palavras)
+- imageKeyword: 3-5 palavras em INGLÊS descrevendo a imagem ideal para o tema
+
+Retorne SOMENTE este JSON válido, sem markdown:
+{
+  "slides": [
+    {"slide":1,"type":"cover","title":"...","subtitle":"...","body":"...","imageKeyword":"..."}
+  ],
+  "caption": "legenda completa para o Instagram com gancho, valor real, CTA e hashtags"
+}`
+  }
+
   // Build a short media reference list for the image slide instruction
   const mediaRef = mediaItems.slice(0, 10).map(m =>
     `- URL: "${m.url}" | Categoria: ${m.category}${m.description ? ` | Descrição: ${m.description}` : ''}`

@@ -88,18 +88,18 @@ export async function POST(req: NextRequest) {
 
       // Assign imageUrl for cover and CTA slides
       for (let i = 0; i < carousel.slides.length; i++) {
-        const slide = carousel.slides[i]
+        const slide   = carousel.slides[i]
         const isFirst = i === 0
         const isLast  = i === carousel.slides.length - 1
+        const isSingle = carousel.slides.length === 1  // single image post
 
         if (!isFirst && !isLast) continue  // only cover + CTA get images
 
         let imageUrl: string | undefined
 
-        if (isFirst) {
-          // Priority 1: client media (brand/product/structure)
+        if (isSingle || isFirst) {
+          // Single image or cover: use brand/product/structure media or Unsplash keyword
           imageUrl = pickMedia(['brand', 'product', 'structure'])
-          // Priority 2: Unsplash with Claude's keyword or theme
           if (!imageUrl) {
             const keyword = slide.imageKeyword ?? p.theme
             const photo = await searchUnsplashPhoto(keyword)
@@ -108,12 +108,9 @@ export async function POST(req: NextRequest) {
               unsplashCredits.push({ ...photo, slideIndex: i })
             }
           }
-        }
-
-        if (isLast) {
-          // Priority 1: client media (team/brand)
+        } else if (isLast) {
+          // CTA slide only (multi-slide): use team/brand media or Unsplash portrait
           imageUrl = pickMedia(['team', 'brand'])
-          // Priority 2: Unsplash professional portrait
           if (!imageUrl) {
             const photo = await searchUnsplashPhoto('professional team business portrait')
             if (photo) {
