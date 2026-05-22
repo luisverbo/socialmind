@@ -22,15 +22,15 @@ export interface CarouselContent {
   caption: string
 }
 
-export type Tone = 'educational' | 'motivational' | 'promotional' | 'journalistic'
+export type Tone = 'educational' | 'motivational' | 'promotional' | 'journalistic' | 'engagement'
 
-export type Template = 'classic' | 'editorial' | 'dark'
+export type Template = 'classic' | 'editorial' | 'dark' | 'news'
 
 export interface GenerateCarouselInput {
   companyId: string
   scheduleId: string | null
   theme: string
-  tone: 'educational' | 'motivational' | 'promotional' | 'journalistic'
+  tone: 'educational' | 'motivational' | 'promotional' | 'journalistic' | 'engagement'
   slidesCount: number
   publishMode: 'automatic' | 'review'
   scheduledFor?: string | null  // ISO string, optional

@@ -12,6 +12,7 @@ const TONE_OPTS = [
   { value: 'motivational', label: 'Motivacional', emoji: '🔥' },
   { value: 'promotional',  label: 'Promocional',  emoji: '🛍️' },
   { value: 'journalistic', label: 'Jornalístico', emoji: '📰' },
+  { value: 'engagement',   label: 'Engajamento',  emoji: '💬' },
 ] as const
 
 const SLIDES_OPTS = [1, 5, 7, 10] as const
@@ -35,6 +36,12 @@ const TEMPLATE_OPTS = [
     desc: 'Fundo escuro',
     preview: '🌙',
   },
+  {
+    value: 'news' as const,
+    label: 'Notícia',
+    desc: 'Estilo jornal/R7',
+    preview: '📺',
+  },
 ]
 
 const DAY_NAMES = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado']
@@ -52,7 +59,7 @@ function progressMessage(elapsed: number, status: string) {
 interface WeeklyEntry {
   day_of_week: number
   theme_id:    string | null
-  tone:        'educational' | 'motivational' | 'promotional' | 'journalistic'
+  tone:        'educational' | 'motivational' | 'promotional' | 'journalistic' | 'engagement'
   enabled:     boolean
 }
 
@@ -71,9 +78,9 @@ export default function GeneratePostModal({ open, onClose, themes }: Props) {
   // form
   const [themeId,      setThemeId]      = useState('')
   const [customTheme,  setCustomTheme]  = useState('')
-  const [tone,         setTone]         = useState<'educational' | 'motivational' | 'promotional' | 'journalistic'>('educational')
+  const [tone,         setTone]         = useState<'educational' | 'motivational' | 'promotional' | 'journalistic' | 'engagement'>('educational')
   const [slides,       setSlides]       = useState<1 | 5 | 7 | 10>(7)
-  const [template,     setTemplate]     = useState<'classic' | 'editorial' | 'dark'>('classic')
+  const [template,     setTemplate]     = useState<'classic' | 'editorial' | 'dark' | 'news'>('classic')
   const [mode,         setMode]         = useState<'review' | 'automatic'>('review')
   const [useImages,    setUseImages]    = useState(false)
   const [scheduleDate, setScheduleDate] = useState('')
@@ -432,7 +439,7 @@ export default function GeneratePostModal({ open, onClose, themes }: Props) {
                 {/* Template */}
                 <div>
                   <label className="form-label">Template</label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {TEMPLATE_OPTS.map(opt => (
                       <button key={opt.value} type="button" onClick={() => setTemplate(opt.value)}
                         className={`p-2.5 rounded-xl border text-center transition-all ${

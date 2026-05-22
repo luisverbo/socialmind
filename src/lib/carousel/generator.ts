@@ -6,6 +6,7 @@ const TONE_MAP = {
   motivational: 'motivacional e inspirador',
   promotional:  'promocional e persuasivo',
   journalistic: 'jornalístico investigativo',
+  engagement:   'engajamento e debate de opinião',
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -22,7 +23,7 @@ export interface WeekPlanItem {
 export async function generateWeekPlan(
   ctx: CompanyContext,
   theme: string,
-  tone: 'educational' | 'motivational' | 'promotional' | 'journalistic',
+  tone: 'educational' | 'motivational' | 'promotional' | 'journalistic' | 'engagement',
   count: number,
 ): Promise<WeekPlanItem[]> {
   const toneLabel = TONE_MAP[tone]
@@ -343,6 +344,35 @@ Exemplos aprovados:
   "A pergunta não é se isso vale para você. É quanto tempo você ainda vai ignorar."
   "Agora que você sabe como o algoritmo funciona — a próxima jogada é sua."
 ` : ''}
+${tone === 'engagement' ? `
+════════════════════════════════════════
+REGRAS DO TOM ENGAJAMENTO — Post de Debate/Opinião
+════════════════════════════════════════
+
+OBJETIVO: Gerar o máximo de comentários e engajamento. Não ensinar, não vender — PROVOCAR DEBATE.
+
+ESTRUTURA OBRIGATÓRIA:
+- Apresente uma situação real, hipotética ou polêmica de forma neutra
+- A situação deve ser controversa o suficiente para gerar opiniões divididas
+- Finalize SEMPRE com uma pergunta direta convidando comentários
+- Não tome partido — apresente o cenário e deixe o público decidir
+- Linguagem direta, coloquial, próxima (não formal, não acadêmica)
+
+TIPOS DE SITUAÇÃO APROVADOS:
+✓ Conflito de gerações ("filho de 40 anos em casa que não trabalha")
+✓ Comportamento inusitado ("adolescente que quer casar com IA")
+✓ Decisão polêmica de empresa ou pessoa pública
+✓ Dilema moral do cotidiano
+✓ Situação que divide opiniões entre grupos diferentes
+
+PERGUNTAS FINAIS APROVADAS:
+✓ "Você apoiaria essa decisão? 👇"
+✓ "Certo ou errado? Conta nos comentários 👇"
+✓ "O que você faria nessa situação? Comenta aí 👇"
+✓ "Você concorda ou discorda? Marca alguém que precisa ver isso 👇"
+
+CAPTION: Reforça a situação + pergunta + pede para marcar alguém + hashtags de debate (#suaopiniao #debata #oquevc acha)
+` : ''}
 Retorne SOMENTE JSON válido, sem markdown, sem explicações.`
 }
 
@@ -352,7 +382,7 @@ Retorne SOMENTE JSON válido, sem markdown, sem explicações.`
 
 function buildUserPrompt(
   theme: string,
-  tone: 'educational' | 'motivational' | 'promotional' | 'journalistic',
+  tone: 'educational' | 'motivational' | 'promotional' | 'journalistic' | 'engagement',
   slidesCount: number,
   mediaItems: MediaItem[],
   recentTopics: string[] = [],
@@ -364,6 +394,38 @@ function buildUserPrompt(
 
   // ── Special case: single image post ──────────────────────────────────────
   if (slidesCount === 1) {
+    if (tone === 'engagement') {
+      return `[ID: ${seed}]
+
+Crie UMA ÚNICA imagem de engajamento/debate sobre: "${theme}"
+Este post tem objetivo de GERAR COMENTÁRIOS — não ensinar nem vender.
+
+ESTRUTURA DA IMAGEM (type: "cover"):
+- title: a situação/cenário polêmico de forma neutra (manchete impactante, até 12 palavras)
+- subtitle: "DEBATE" ou "SUA OPINIÃO" ou "O QUE VOCÊ ACHA" (MAIÚSCULAS, 2-3 palavras)
+- body: a pergunta direta para o público comentar (coloquial, com emoji 👇 no final, máx 20 palavras)
+- imageKeyword: 3-5 palavras em INGLÊS descrevendo foto relevante para o cenário
+
+EXEMPLOS DE QUALIDADE:
+Exemplo 1: tema "filho adulto em casa"
+  title: "Mulher expulsa filho de 40 anos de casa porque ele não trabalha"
+  subtitle: "SUA OPINIÃO"
+  body: "Você apoiaria essa decisão? O que você faria no lugar dela? Comenta aí 👇"
+
+Exemplo 2: tema "relacionamento com IA"
+  title: "Adolescente diz que criou namorado de IA e pede aos pais para se casar"
+  subtitle: "DEBATE"
+  body: "Certo ou errado? Você deixaria seu filho fazer isso? Marca quem precisa ver 👇"
+
+Retorne SOMENTE este JSON válido, sem markdown:
+{
+  "slides": [
+    {"slide":1,"type":"cover","title":"...","subtitle":"...","body":"...","imageKeyword":"..."}
+  ],
+  "caption": "legenda curta: situação + pergunta + pede para comentar e marcar alguém + 5 hashtags de debate"
+}`
+    }
+
     return `[ID: ${seed}]
 
 Crie UMA ÚNICA imagem (post único, não carrossel) sobre: "${theme}"
@@ -543,7 +605,7 @@ export async function generateCarouselContent(
   ctx: CompanyContext,
   mediaItems: MediaItem[],
   theme: string,
-  tone: 'educational' | 'motivational' | 'promotional' | 'journalistic',
+  tone: 'educational' | 'motivational' | 'promotional' | 'journalistic' | 'engagement',
   slidesCount: number,
   recentTopics: string[] = [],
   batchAngle?: WeekPlanItem,

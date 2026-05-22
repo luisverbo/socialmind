@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
   const p = job.params as {
     theme:        string
-    tone:         'educational' | 'motivational' | 'promotional' | 'journalistic'
+    tone:         'educational' | 'motivational' | 'promotional' | 'journalistic' | 'engagement'
     slidesCount:  number
     publishMode:  'automatic' | 'review'
     useImages:    boolean

@@ -102,16 +102,16 @@ function contentTemplate(slide: SlideContent, colors: BrandColors, slideNum: num
     : 0
 
   // Title font: large by default, scale down only for very long titles
-  const titleFontSize = titleLen > 55 ? 54 : titleLen > 38 ? 60 : 66
+  const titleFontSize = titleLen > 55 ? 62 : titleLen > 38 ? 68 : 76
 
   // Bullets font: reduce only when bullets are long or there are 4+
   const bulletsFontSize = bulletCount >= 4
-    ? (avgBulletLen > 50 ? 26 : 28)
-    : avgBulletLen > 60 ? 28 : avgBulletLen > 40 ? 30 : 33
+    ? (avgBulletLen > 50 ? 30 : 32)
+    : avgBulletLen > 60 ? 32 : avgBulletLen > 40 ? 34 : 38
 
   const bulletsGap      = bulletCount >= 4 ? 16 : bulletCount === 3 && avgBulletLen > 50 ? 20 : 24
   const h2MarginBottom  = bodyLen > 0 ? 24 : bulletCount >= 4 ? 28 : 32
-  const bodyFontSize    = bodyLen > 100 ? 28 : 30
+  const bodyFontSize    = bodyLen > 100 ? 32 : 36
   const bodyMarginBottom = 22
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
@@ -354,7 +354,7 @@ function editorialCoverTemplate(slide: SlideContent, colors: BrandColors, slideN
         <span style="font-size:24px;font-weight:600;color:${colors.primary};text-transform:uppercase;letter-spacing:1.5px;">${escapeHtml(slide.subtitle)}</span>
       </div>` : ''}
       <h1 style="font-size:${slide.imageUrl ? '74px' : '88px'};font-weight:900;color:#0F172A;line-height:1.05;letter-spacing:-2px;margin-bottom:${slide.body ? '24px' : '0'};">${escapeHtml(slide.title)}</h1>
-      ${slide.body ? `<p style="font-size:32px;color:#475569;line-height:1.5;max-width:880px;">${escapeHtml(slide.body)}</p>` : ''}
+      ${slide.body ? `<p style="font-size:36px;color:#475569;line-height:1.5;max-width:880px;">${escapeHtml(slide.body)}</p>` : ''}
     </div>
     ${slide.imageUrl
       ? `<div style="flex-shrink:0;height:${imgHeight}px;margin:0 64px;border-radius:24px;overflow:hidden;">
@@ -381,12 +381,12 @@ function editorialContentTemplate(slide: SlideContent, colors: BrandColors, slid
   <div class="slide">
     ${editorialHeader(colors, logoUrl, slideNum, total, profile)}
     <div class="content">
-      <h2 style="font-size:62px;font-weight:800;color:#0F172A;line-height:1.12;letter-spacing:-1px;margin-bottom:28px;">${escapeHtml(slide.title)}</h2>
-      ${slide.body ? `<p style="font-size:30px;color:#475569;line-height:1.6;margin-bottom:30px;">${escapeHtml(slide.body)}</p>` : ''}
+      <h2 style="font-size:70px;font-weight:800;color:#0F172A;line-height:1.12;letter-spacing:-1px;margin-bottom:28px;">${escapeHtml(slide.title)}</h2>
+      ${slide.body ? `<p style="font-size:34px;color:#475569;line-height:1.6;margin-bottom:30px;">${escapeHtml(slide.body)}</p>` : ''}
       ${bullets.length > 0 ? `<div style="display:flex;flex-direction:column;gap:20px;">
         ${bullets.map(b => `<div style="display:flex;align-items:flex-start;gap:20px;">
-          <span style="font-size:30px;font-weight:700;color:${colors.primary};flex-shrink:0;line-height:1.5;">→</span>
-          <span style="font-size:30px;color:#334155;line-height:1.5;">${escapeHtml(b)}</span>
+          <span style="font-size:34px;font-weight:700;color:${colors.primary};flex-shrink:0;line-height:1.5;">→</span>
+          <span style="font-size:34px;color:#334155;line-height:1.5;">${escapeHtml(b)}</span>
         </div>`).join('')}
       </div>` : ''}
     </div>
@@ -491,12 +491,12 @@ function darkContentTemplate(slide: SlideContent, colors: BrandColors, slideNum:
     <div class="content">
       <div>
         <p style="font-size:26px;color:rgba(255,255,255,0.4);font-weight:500;margin-bottom:22px;font-family:'Inter','Helvetica Neue',Arial,sans-serif;"><span style="color:${colors.primary};font-weight:700;">${slideNum}</span> / ${total}</p>
-        <h2 style="font-size:66px;font-weight:800;color:#FFFFFF;line-height:1.12;letter-spacing:-1px;margin-bottom:28px;">${escapeHtml(slide.title)}</h2>
-        ${slide.body ? `<p style="font-size:30px;color:rgba(255,255,255,0.7);line-height:1.6;margin-bottom:28px;">${escapeHtml(slide.body)}</p>` : ''}
+        <h2 style="font-size:74px;font-weight:800;color:#FFFFFF;line-height:1.12;letter-spacing:-1px;margin-bottom:28px;">${escapeHtml(slide.title)}</h2>
+        ${slide.body ? `<p style="font-size:34px;color:rgba(255,255,255,0.7);line-height:1.6;margin-bottom:28px;">${escapeHtml(slide.body)}</p>` : ''}
         ${bullets.length > 0 ? `<div style="display:flex;flex-direction:column;gap:20px;">
           ${bullets.map(b => `<div style="display:flex;align-items:flex-start;gap:20px;">
             <div style="flex-shrink:0;width:12px;height:12px;border-radius:50%;background:linear-gradient(135deg,${colors.primary},${colors.secondary});margin-top:12px;"></div>
-            <span style="font-size:30px;color:rgba(255,255,255,0.7);line-height:1.5;">${escapeHtml(b)}</span>
+            <span style="font-size:34px;color:rgba(255,255,255,0.7);line-height:1.5;">${escapeHtml(b)}</span>
           </div>`).join('')}
         </div>` : ''}
       </div>
@@ -550,6 +550,172 @@ function darkSlideHtml(slide: SlideContent, colors: BrandColors, slideIndex: num
   }
 }
 
+// ─── News template (Portal R7 / news card style) ─────────────────────────────
+
+function newsCoverTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: string, profile?: RenderProfile): string {
+  const hasImage = !!slide.imageUrl
+  const companyName = profile?.companyName ?? 'SocialMind'
+  const handle = profile?.instagramHandle ? `@${profile.instagramHandle}` : ''
+
+  const bodyBg = hasImage
+    ? `background-image:url('${escapeHtml(slide.imageUrl!)}');background-size:cover;background-position:center;`
+    : `background:linear-gradient(135deg,${colors.primary} 0%,${colors.secondary} 100%);`
+
+  // Title font size — scale down for very long titles
+  const titleLen = slide.title?.length ?? 0
+  const titleSize = titleLen > 60 ? 74 : titleLen > 45 ? 82 : 92
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <style>
+    * { margin:0;padding:0;box-sizing:border-box; }
+    html,body { width:1080px;height:1080px;overflow:hidden;font-family:'Inter','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased; }
+    body { ${bodyBg} }
+    .slide { width:1080px;height:1080px;position:relative;display:flex;flex-direction:column;overflow:hidden; }
+    .overlay {
+      position:absolute;inset:0;
+      background:linear-gradient(to bottom,transparent 0%,transparent 28%,rgba(0,0,0,0.45) 50%,rgba(0,0,0,0.9) 100%);
+    }
+    .top-stripe { position:absolute;top:0;left:0;right:0;height:7px;background:linear-gradient(90deg,${colors.primary},${colors.secondary});z-index:20; }
+    .left-stripe { position:absolute;top:32%;bottom:0;left:0;width:8px;background:linear-gradient(to bottom,${colors.primary},${colors.secondary});z-index:20; }
+    .logo-wrap {
+      position:absolute;top:30px;right:36px;z-index:20;
+      background:rgba(255,255,255,0.92);border-radius:12px;
+      padding:10px 20px;display:flex;align-items:center;gap:10px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.25);
+    }
+    .handle-wrap {
+      position:absolute;top:30px;left:36px;z-index:20;
+      background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);
+      border:1px solid rgba(255,255,255,0.25);border-radius:10px;
+      padding:9px 20px;
+    }
+    .content { position:absolute;bottom:0;left:0;right:0;z-index:10;padding:0 60px 60px 60px; }
+    .category-tag {
+      display:inline-block;background:${colors.primary};
+      color:#fff;font-size:24px;font-weight:800;letter-spacing:2px;
+      text-transform:uppercase;padding:8px 24px;border-radius:6px;margin-bottom:24px;
+    }
+    h1 { font-size:${titleSize}px;font-weight:900;color:#ffffff;line-height:1.04;letter-spacing:-2px;text-shadow:0 2px 20px rgba(0,0,0,0.6); }
+    .body-text { font-size:36px;color:rgba(255,255,255,0.9);line-height:1.45;margin-top:22px;max-width:920px;font-weight:500; }
+  </style></head><body>
+  <div class="slide">
+    ${hasImage ? '<div class="overlay"></div>' : ''}
+    <div class="top-stripe"></div>
+    <div class="left-stripe"></div>
+    ${handle ? `<div class="handle-wrap"><span style="font-size:24px;color:rgba(255,255,255,0.9);font-weight:600;">${escapeHtml(handle)}</span></div>` : ''}
+    <div class="logo-wrap">
+      ${logoUrl
+        ? `<img src="${escapeHtml(logoUrl)}" style="height:38px;object-fit:contain;" />`
+        : `<span style="font-size:24px;font-weight:800;color:${colors.primary};">${escapeHtml(companyName)}</span>`
+      }
+    </div>
+    <div class="content">
+      ${slide.subtitle ? `<div class="category-tag">${escapeHtml(slide.subtitle)}</div>` : ''}
+      <h1>${escapeHtml(slide.title)}</h1>
+      ${slide.body ? `<p class="body-text">${escapeHtml(slide.body)}</p>` : ''}
+    </div>
+  </div>
+  </body></html>`
+}
+
+function newsContentTemplate(slide: SlideContent, colors: BrandColors, slideNum: number, total: number, logoUrl?: string, profile?: RenderProfile): string {
+  const bullets = slide.bullets ?? []
+  const hasImage = !!slide.imageUrl
+  const companyName = profile?.companyName ?? 'SocialMind'
+
+  const bodyBg = hasImage
+    ? `background-image:linear-gradient(rgba(0,0,0,0.7),rgba(0,0,0,0.7)),url('${escapeHtml(slide.imageUrl!)}');background-size:cover;background-position:center;`
+    : `background:#0D1117;`
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <style>
+    * { margin:0;padding:0;box-sizing:border-box; }
+    html,body { width:1080px;height:1080px;overflow:hidden;font-family:'Inter','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased; }
+    body { ${bodyBg} }
+    .slide { width:1080px;height:1080px;position:relative;display:flex;flex-direction:column;overflow:hidden; }
+    .top-stripe { height:7px;background:linear-gradient(90deg,${colors.primary},${colors.secondary});flex-shrink:0; }
+    .content { flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-between;padding:52px 80px 60px 80px; }
+  </style></head><body>
+  <div class="slide">
+    <div class="top-stripe"></div>
+    <div class="content">
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:36px;">
+          <span style="font-size:26px;color:rgba(255,255,255,0.45);font-weight:500;"><span style="color:${colors.primary};font-weight:800;">${slideNum}</span> / ${total}</span>
+          ${logoUrl
+            ? `<img src="${escapeHtml(logoUrl)}" style="height:36px;object-fit:contain;opacity:0.7;" />`
+            : `<span style="font-size:22px;font-weight:700;color:${colors.primary};">${escapeHtml(companyName)}</span>`
+          }
+        </div>
+        <h2 style="font-size:72px;font-weight:900;color:#FFFFFF;line-height:1.08;letter-spacing:-1.5px;margin-bottom:30px;">${escapeHtml(slide.title)}</h2>
+        ${slide.body ? `<p style="font-size:34px;color:rgba(255,255,255,0.75);line-height:1.55;margin-bottom:32px;">${escapeHtml(slide.body)}</p>` : ''}
+        ${bullets.length > 0 ? `<div style="display:flex;flex-direction:column;gap:22px;">
+          ${bullets.map(b => `<div style="display:flex;align-items:flex-start;gap:22px;">
+            <div style="flex-shrink:0;width:7px;height:7px;border-radius:50%;background:${colors.primary};margin-top:16px;box-shadow:0 0 10px ${colors.primary};"></div>
+            <span style="font-size:34px;color:rgba(255,255,255,0.85);line-height:1.5;font-weight:500;">${escapeHtml(b)}</span>
+          </div>`).join('')}
+        </div>` : ''}
+      </div>
+      ${slide.footer ? `<span style="font-size:23px;color:rgba(255,255,255,0.3);">${escapeHtml(slide.footer)}</span>` : '<span></span>'}
+    </div>
+  </div>
+  </body></html>`
+}
+
+function newsCtaTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: string, profile?: RenderProfile): string {
+  const hasImage = !!slide.imageUrl
+  const handle = profile?.instagramHandle ? `@${profile.instagramHandle}` : ''
+
+  const bodyBg = hasImage
+    ? `background-image:url('${escapeHtml(slide.imageUrl!)}');background-size:cover;background-position:center;`
+    : `background:linear-gradient(135deg,${colors.primary} 0%,${colors.secondary} 100%);`
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <style>
+    * { margin:0;padding:0;box-sizing:border-box; }
+    html,body { width:1080px;height:1080px;overflow:hidden;font-family:'Inter','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased; }
+    body { ${bodyBg} }
+    .slide { width:1080px;height:1080px;position:relative;display:flex;flex-direction:column;overflow:hidden; }
+    .overlay {
+      position:absolute;inset:0;
+      background:linear-gradient(to bottom,rgba(0,0,0,0.3) 0%,rgba(0,0,0,0.85) 100%);
+    }
+    .top-stripe { position:absolute;top:0;left:0;right:0;height:7px;background:linear-gradient(90deg,${colors.primary},${colors.secondary});z-index:20; }
+    .left-stripe { position:absolute;top:0;bottom:0;left:0;width:8px;background:linear-gradient(to bottom,${colors.primary},${colors.secondary});z-index:20; }
+    .content { position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:80px; }
+    .question-icon { font-size:80px;margin-bottom:32px; }
+    h2 { font-size:82px;font-weight:900;color:#fff;line-height:1.06;letter-spacing:-2px;margin-bottom:32px;text-shadow:0 2px 20px rgba(0,0,0,0.5); }
+    .body { font-size:38px;color:rgba(255,255,255,0.88);line-height:1.5;max-width:860px;margin-bottom:56px; }
+    .cta-pill {
+      display:inline-flex;align-items:center;gap:14px;
+      padding:26px 64px;border-radius:16px;
+      background:rgba(255,255,255,0.15);border:2px solid rgba(255,255,255,0.4);
+      backdrop-filter:blur(10px);
+    }
+    .handle-bottom { margin-top:40px;font-size:26px;color:rgba(255,255,255,0.5);font-weight:500; }
+  </style></head><body>
+  <div class="slide">
+    ${hasImage ? '<div class="overlay"></div>' : ''}
+    <div class="top-stripe"></div>
+    <div class="left-stripe"></div>
+    <div class="content">
+      <h2>${escapeHtml(slide.title)}</h2>
+      ${slide.body ? `<p class="body">${escapeHtml(slide.body)}</p>` : ''}
+      ${slide.cta ? `<div class="cta-pill"><span style="font-size:34px;font-weight:700;color:#fff;">${escapeHtml(slide.cta)}</span></div>` : ''}
+      ${handle ? `<p class="handle-bottom">${escapeHtml(handle)}</p>` : ''}
+    </div>
+  </div>
+  </body></html>`
+}
+
+function newsSlideHtml(slide: SlideContent, colors: BrandColors, slideIndex: number, total: number, logoUrl?: string, profile?: RenderProfile): string {
+  switch (slide.type) {
+    case 'cover': return newsCoverTemplate(slide, colors, logoUrl, profile)
+    case 'cta':   return newsCtaTemplate(slide, colors, logoUrl, profile)
+    default:      return newsContentTemplate(slide, colors, slideIndex, total, logoUrl, profile)
+  }
+}
+
 export function buildSlideHtml(
   slide: SlideContent,
   colors: BrandColors,
@@ -559,6 +725,9 @@ export function buildSlideHtml(
   template: Template = 'classic',
   profile?: RenderProfile
 ): string {
+  if (template === 'news') {
+    return newsSlideHtml(slide, colors, slideIndex, total, logoUrl, profile)
+  }
   if (template === 'editorial') {
     return editorialSlideHtml(slide, colors, slideIndex, total, logoUrl, profile)
   }
