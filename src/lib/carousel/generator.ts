@@ -334,9 +334,14 @@ VOCABULÁRIO OBRIGATÓRIO nesse tom:
 VOCABULÁRIO PROIBIDO nesse tom:
 "dicas", "truques", "segredos simples", qualquer clichê genérico de IA
 
-ÚLTIMO SLIDE — chamada urgente estilo fim de reportagem:
-Ex: "A questão não é SE isso vai acontecer com você. É QUANDO.
-     E o que você vai fazer a respeito define tudo."
+ÚLTIMO SLIDE — fechamento estilo fim de reportagem:
+O último slide é o VEREDITO da investigação, não uma virada comercial.
+Deve responder: "O que eu faço agora com o que aprendi aqui?"
+Mantenha o assunto do carrossel — não invente novos tópicos.
+Exemplos aprovados:
+  "Você agora sabe o que 90% dos perfis ignoram. Use isso antes que os outros descubram."
+  "A pergunta não é se isso vale para você. É quanto tempo você ainda vai ignorar."
+  "Agora que você sabe como o algoritmo funciona — a próxima jogada é sua."
 ` : ''}
 Retorne SOMENTE JSON válido, sem markdown, sem explicações.`
 }
@@ -412,19 +417,28 @@ FIO CONDUTOR — REGRA MAIS IMPORTANTE
 ════════════════════════════════════════
 
 Este carrossel conta UMA história com começo, meio e fim.
-Cada slide é um CAPÍTULO — não um post independente.
+Cada slide é um CAPÍTULO da mesma história — não um post independente.
+
+O TEMA É: "${theme}"
+Todos os slides, do 1 ao ${slidesCount}, devem girar em torno deste tema.
+Não é permitido desviar do tema para outro assunto em nenhum slide.
+
+TESTE ANTES DE ESCREVER CADA SLIDE:
+"Este slide ainda está falando sobre '${theme}'?"
+Se NÃO → descarte e reescreva.
+
+PROGRESSÃO OBRIGATÓRIA:
+✓ Slide 1: GANCHO — levanta uma tensão ou provoca curiosidade sobre o tema
+✓ Slide 2: PROBLEMA/CONTEXTO — por que o tema importa agora
+✓ Slides 3 a ${slidesCount - 2}: DESENVOLVIMENTO — aprofunda em sequência lógica (causa → efeito, problema → solução)
+✓ Slide ${slidesCount - 1}: VIRADA/CONCLUSÃO — o insight principal do carrossel
+✓ Slide ${slidesCount}: FECHAMENTO — convida à ação com base no que foi revelado (NÃO muda o assunto)
 
 PROIBIDO:
 ✗ Mudar de assunto entre slides
+✗ Último slide virar pitch comercial sobre serviço não relacionado ao tema
 ✗ Repetir a mesma ideia com palavras diferentes
 ✗ Slide que poderia existir em OUTRA ordem sem perder sentido
-✗ Bullets soltos sem conexão com o título do slide
-
-OBRIGATÓRIO:
-✓ Slide 2 estabelece o PROBLEMA ou CONTEXTO
-✓ Slides 3 a ${slidesCount - 2} APROFUNDAM em sequência lógica (causa → efeito, problema → solução, antes → depois)
-✓ Slide ${slidesCount - 1} entrega a CONCLUSÃO ou VIRADA
-✓ Slide ${slidesCount} convida à AÇÃO
 
 ════════════════════════════════════════
 ESTRUTURA DOS SLIDES
@@ -450,10 +464,18 @@ REGRA DOS BULLETS:
 ✗ Nunca use bullet que começa com verbo genérico sem contexto ("Faça X", "Use Y")
 
 SLIDE ${slidesCount} — CTA (type: "cta")
-- title: frase de impacto que encerra a narrativa (não use "conclusão" nem "resumo")
-- body: o que o leitor pode fazer COM esse conhecimento agora (concreto)
-- cta: chamada à ação específica e emocional
-- subtitle: pergunta que gera comentários
+- title: frase de impacto que FECHA o argumento iniciado no slide 1 — deve ter ligação direta com o tema
+- body: consequência concreta de aplicar o que foi revelado neste carrossel (máx 2 frases)
+- cta: chamada à ação diretamente ligada ao tema (ex: "salva", "compartilha", "testa agora")
+- subtitle: pergunta que gera comentários — relacionada ao tema deste carrossel
+
+⚠️ REGRA ABSOLUTA DO ÚLTIMO SLIDE:
+O CTA é o "então, e agora?" da narrativa que você construiu.
+NÃO introduza novos tópicos que não apareceram nos slides anteriores.
+NÃO vire o último slide em proposta comercial se o tema não era o produto/serviço.
+Se o carrossel foi sobre o algoritmo do Instagram → o CTA deve fechar com algo sobre o algoritmo.
+Se foi sobre erros de nutrição → o CTA deve fechar com algo sobre nutrição.
+O leitor deve sentir que chegou ao fim de UMA história — não que entrou em outra.
 
 IMPORTANTE — TIPOS DE SLIDE:
 Use SEMPRE "cover" para slide 1 e "cta" para o último slide.

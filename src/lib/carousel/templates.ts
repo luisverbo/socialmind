@@ -336,9 +336,8 @@ function editorialFooter(colors: BrandColors): string {
 }
 
 function editorialCoverTemplate(slide: SlideContent, colors: BrandColors, slideNum: number, total: number, logoUrl?: string, profile?: RenderProfile): string {
-  // Image height: taller = more square. With header ~160px + footer ~100px, content is ~820px.
-  // A square image at full width (952px) would be 952px tall — too big. Use ~480px for a nice ratio.
-  const imgHeight = slide.imageUrl ? 460 : 260
+  // Image height: 340px gives a good balance — not too small, not dominating
+  const imgHeight = slide.imageUrl ? 340 : 220
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
   <style>
     * { margin:0;padding:0;box-sizing:border-box; }
