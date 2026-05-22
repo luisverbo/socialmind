@@ -96,15 +96,12 @@ function contentTemplate(slide: SlideContent, colors: BrandColors, slideNum: num
   const bodyLen   = slide.body?.length ?? 0
   const bulletCount = bullets.length
 
-  // Avg chars per bullet (long bullets need smaller font)
   const avgBulletLen = bullets.length > 0
     ? bullets.reduce((s, b) => s + b.length, 0) / bullets.length
     : 0
 
-  // Title font: large by default, scale down only for very long titles
   const titleFontSize = titleLen > 55 ? 62 : titleLen > 38 ? 68 : 76
 
-  // Bullets font: reduce only when bullets are long or there are 4+
   const bulletsFontSize = bulletCount >= 4
     ? (avgBulletLen > 50 ? 30 : 32)
     : avgBulletLen > 60 ? 32 : avgBulletLen > 40 ? 34 : 38
@@ -282,7 +279,7 @@ function imageTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: strin
   </body></html>`
 }
 
-// ─── Editorial template (Twitter/X card style) ────────────────────────────────
+// ─── Editorial template (Twitter/X card style) ────────────────────────────────────────────
 
 function editorialHeader(
   colors: BrandColors,
@@ -291,7 +288,6 @@ function editorialHeader(
   total: number,
   profile?: RenderProfile
 ): string {
-  // Avatar: prefer Instagram profile pic, then logo, then gradient circle
   const profilePic = profile?.profilePicUrl ?? logoUrl
   const avatarContent = profilePic
     ? `<img src="${escapeHtml(profilePic)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`
@@ -336,7 +332,6 @@ function editorialFooter(colors: BrandColors): string {
 }
 
 function editorialCoverTemplate(slide: SlideContent, colors: BrandColors, slideNum: number, total: number, logoUrl?: string, profile?: RenderProfile): string {
-  // Image height: 340px gives a good balance — not too small, not dominating
   const imgHeight = slide.imageUrl ? 340 : 220
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
   <style>
@@ -427,7 +422,7 @@ function editorialSlideHtml(slide: SlideContent, colors: BrandColors, slideIndex
   }
 }
 
-// ─── Dark template (dark mode, bold) ─────────────────────────────────────────
+// ─── Dark template (dark mode, bold) ──────────────────────────────────────────────
 
 function darkLogoHtml(logoUrl: string | undefined): string {
   if (!logoUrl) return ''
@@ -550,7 +545,7 @@ function darkSlideHtml(slide: SlideContent, colors: BrandColors, slideIndex: num
   }
 }
 
-// ─── News template (Portal R7 / news card style) ─────────────────────────────
+// ─── News template (Portal R7 / news card style) ───────────────────────────────────────────
 
 function newsCoverTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: string, profile?: RenderProfile): string {
   const hasImage = !!slide.imageUrl
@@ -561,7 +556,6 @@ function newsCoverTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: s
     ? `background-image:url('${escapeHtml(slide.imageUrl!)}');background-size:cover;background-position:center;`
     : `background:linear-gradient(135deg,${colors.primary} 0%,${colors.secondary} 100%);`
 
-  // Title font size — scale down for very long titles
   const titleLen = slide.title?.length ?? 0
   const titleSize = titleLen > 60 ? 74 : titleLen > 45 ? 82 : 92
 
@@ -683,7 +677,6 @@ function newsCtaTemplate(slide: SlideContent, colors: BrandColors, logoUrl?: str
     .top-stripe { position:absolute;top:0;left:0;right:0;height:7px;background:linear-gradient(90deg,${colors.primary},${colors.secondary});z-index:20; }
     .left-stripe { position:absolute;top:0;bottom:0;left:0;width:8px;background:linear-gradient(to bottom,${colors.primary},${colors.secondary});z-index:20; }
     .content { position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:80px; }
-    .question-icon { font-size:80px;margin-bottom:32px; }
     h2 { font-size:82px;font-weight:900;color:#fff;line-height:1.06;letter-spacing:-2px;margin-bottom:32px;text-shadow:0 2px 20px rgba(0,0,0,0.5); }
     .body { font-size:38px;color:rgba(255,255,255,0.88);line-height:1.5;max-width:860px;margin-bottom:56px; }
     .cta-pill {
