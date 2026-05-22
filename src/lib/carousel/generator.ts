@@ -479,10 +479,7 @@ Não misture com outros ângulos do tema. Seja profundo neste ângulo específic
   } else {
     const specificTopic = theme.length > 20 || /como|por que|erro|dica|estratégia|guia|passo|secret/i.test(theme)
     angleBlock = specificTopic
-      ? `\nMODO ESPECIALISTA ATIVADO:
-Você é o maior especialista do Brasil no assunto: "${theme}"
-Traga insights que 90% dos profissionais do nicho não conhecem.
-Cada bullet deve conter algo que surpreenda — dados reais, números, mecanismos específicos.\n`
+      ? `\nMODO ESPECIALISTA ATIVADO:\nVocê é o maior especialista do Brasil no assunto: "${theme}"\nTraga insights que 90% dos profissionais do nicho não conhecem.\nCada bullet deve conter algo que surpreenda — dados reais, números, mecanismos específicos.\n`
       : ''
     structureBlock = detectThemeStructure(theme, slidesCount)
   }
