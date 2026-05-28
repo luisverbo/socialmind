@@ -5,7 +5,6 @@ const RENDERER_URL = process.env.RENDERER_URL
 const RENDERER_KEY = process.env.RENDERER_API_KEY
 const VPS_TIMEOUT  = 30_000
 const MAX_RETRIES  = 2
-]
 
 export interface PromptProfile {
   username:     string
