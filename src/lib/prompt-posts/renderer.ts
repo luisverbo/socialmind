@@ -1,23 +1,10 @@
+import { HEADLINE_STYLES, type HeadlineStyle } from './styles'
+export { HEADLINE_STYLES, type HeadlineStyle }
+
 const RENDERER_URL = process.env.RENDERER_URL
 const RENDERER_KEY = process.env.RENDERER_API_KEY
 const VPS_TIMEOUT  = 30_000
 const MAX_RETRIES  = 2
-
-export interface HeadlineStyle {
-  id:        string
-  label:     string
-  textColor: string
-  bgColor:   string
-  gradient?: string
-}
-
-export const HEADLINE_STYLES: HeadlineStyle[] = [
-  { id: 'purple-white',    label: 'Roxo + Branco',      textColor: '#FFFFFF', bgColor: '#6C3FE8' },
-  { id: 'gradient-white',  label: 'Gradiente + Branco', textColor: '#FFFFFF', bgColor: '',       gradient: 'linear-gradient(135deg,#6C3FE8,#E84393)' },
-  { id: 'black-yellow',    label: 'Preto + Amarelo',    textColor: '#FFD700', bgColor: '#000000' },
-  { id: 'white-purple',    label: 'Branco + Roxo',      textColor: '#6C3FE8', bgColor: '#FFFFFF' },
-  { id: 'red-white',       label: 'Vermelho + Branco',  textColor: '#FFFFFF', bgColor: '#E84343' },
-  { id: 'transparent',     label: 'Sem fundo + Branco', textColor: '#FFFFFF', bgColor: 'transparent' },
 ]
 
 export interface PromptProfile {

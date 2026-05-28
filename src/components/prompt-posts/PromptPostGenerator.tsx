@@ -8,7 +8,7 @@ import {
   ArrowRight, Loader2, X, Send,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { HEADLINE_STYLES, type HeadlineStyle } from '@/lib/prompt-posts/renderer'
+import { HEADLINE_STYLES, type HeadlineStyle } from '@/lib/prompt-posts/styles'
 
 type Step = 'config' | 'generating' | 'result'
 
