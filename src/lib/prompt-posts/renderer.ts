@@ -197,7 +197,7 @@ async function renderLocally(html: string): Promise<Buffer> {
   try {
     const page = await browser.newPage()
     await page.setViewport({ width: 1080, height: 1080, deviceScaleFactor: 2 })
-    await page.setContent(html, { waitUntil: 'networkidle0' })
+    await page.setContent(html, { waitUntil: 'load', timeout: 15_000 })
     const buf = await page.screenshot({ type: 'png', clip: { x: 0, y: 0, width: 1080, height: 1080 } })
     return Buffer.from(buf)
   } finally {
