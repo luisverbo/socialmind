@@ -185,19 +185,21 @@ export async function POST(req: NextRequest) {
       .eq('id', postId)
 
     // Save generation metadata
-    await supabase.from('generation_jobs').insert({
-      post_id:    postId,
-      company_id: companyId,
-      status:     'completed',
-      params: {
-        topic,
-        headlineStyleId,
-        coverImageUrl: coverImageUrl ?? null,
-        slidesCount,
-        template: 'prompt',
-        headlineStyle: style,
-      },
-    }).catch(() => {})
+    try {
+      await supabase.from('generation_jobs').insert({
+        post_id:    postId,
+        company_id: companyId,
+        status:     'completed',
+        params: {
+          topic,
+          headlineStyleId,
+          coverImageUrl: coverImageUrl ?? null,
+          slidesCount,
+          template: 'prompt',
+          headlineStyle: style,
+        },
+      })
+    } catch (_) {}
 
     return NextResponse.json({
       postId,
