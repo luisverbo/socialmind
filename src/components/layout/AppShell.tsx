@@ -4,16 +4,17 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, CalendarDays, Images, Camera,
-  Settings, BarChart3, Zap, Instagram, AlertTriangle, LogOut,
+  Settings, BarChart3, Zap, Instagram, AlertTriangle, LogOut, Sparkles,
 } from 'lucide-react'
 import { useCompany } from '@/hooks/useCompany'
 import { useState, useEffect } from 'react'
 
 const NAV_MAIN = [
-  { href: '/',           icon: LayoutDashboard, label: 'Dashboard',   exact: true  },
-  { href: '/scheduling', icon: CalendarDays,    label: 'Agendamento', exact: false },
-  { href: '/posts',      icon: Images,          label: 'Posts',       exact: false },
-  { href: '/media',      icon: Camera,          label: 'Mídia',       exact: false },
+  { href: '/',              icon: LayoutDashboard, label: 'Dashboard',    exact: true  },
+  { href: '/scheduling',    icon: CalendarDays,    label: 'Agendamento',  exact: false },
+  { href: '/posts',         icon: Images,          label: 'Posts',        exact: false },
+  { href: '/media',         icon: Camera,          label: 'Mídia',        exact: false },
+  { href: '/prompt-posts',  icon: Sparkles,        label: 'Prompt Posts', exact: false },
 ]
 
 const NAV_BOTTOM = [
@@ -22,11 +23,11 @@ const NAV_BOTTOM = [
 ]
 
 const MOBILE_NAV = [
-  { href: '/',           icon: LayoutDashboard, label: 'Home',      exact: true  },
-  { href: '/scheduling', icon: CalendarDays,    label: 'Agenda',    exact: false },
-  { href: '/posts',      icon: Images,          label: 'Posts',     exact: false },
-  { href: '/media',      icon: Camera,          label: 'Mídia',     exact: false },
-  { href: '/settings',   icon: Settings,        label: 'Config',    exact: false },
+  { href: '/',             icon: LayoutDashboard, label: 'Home',    exact: true  },
+  { href: '/scheduling',   icon: CalendarDays,    label: 'Agenda',  exact: false },
+  { href: '/posts',        icon: Images,          label: 'Posts',   exact: false },
+  { href: '/prompt-posts', icon: Sparkles,        label: 'Prompts', exact: false },
+  { href: '/settings',     icon: Settings,        label: 'Config',  exact: false },
 ]
 
 function isActive(pathname: string, href: string, exact: boolean) {
